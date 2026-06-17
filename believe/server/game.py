@@ -127,6 +127,33 @@ class Player:
 
         return selected_cards
 
+    def discard_sets(self) -> list[str]:
+        """Discard complete sets of four cards, except aces."""
+        rank_counts = {}
+
+        for card in self.hand:
+            rank_counts[card.rank] = (
+                rank_counts.get(card.rank, 0) + 1
+            )
+
+        discarded_ranks = []
+
+        for rank in RANKS:
+            if rank == "A":
+                continue
+
+            if rank_counts.get(rank, 0) == 4:
+                discarded_ranks.append(rank)
+
+        if discarded_ranks:
+            self.hand[:] = [
+                card
+                for card in self.hand
+                if card.rank not in discarded_ranks
+            ]
+
+        return discarded_ranks
+
     def card_count(self) -> int:
         """Return the number of cards in the player's hand."""
         return len(self.hand)
@@ -251,3 +278,29 @@ class Game:
         ]
 
         return self.players[username]
+
+    def prepare_turn(self) -> list[object]:
+        """Discard complete sets before the current player's turn."""
+        events = []
+
+        player = self.current_player()
+
+        if player is None:
+            return events
+
+        discarded_ranks = player.discard_sets()
+
+        for rank in discarded_ranks:
+            events.append(
+                (
+                    "private",
+                    player.username,
+                    (
+                        "Automatically discarded four cards "
+                        "of rank {}."
+                    ),
+                    rank,
+                )
+            )
+
+        return events
