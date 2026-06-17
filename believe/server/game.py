@@ -1,8 +1,9 @@
 """Game objects for Believe-It-or-Not."""
 
 import random
+import shlex
 
-from believe.common import RANKS, SUITS
+from believe.common import RANKS, SUITS, DECLARABLE_RANKS
 
 
 class Card:
@@ -451,3 +452,83 @@ class Game:
         events.append(("game_over",))
 
         return events
+
+    def play(self, args: str, username: str,) -> tuple[object, list[object]]:
+        """Place selected cards and start a new round."""
+        if not self.started:
+            return "Game has not started.", []
+
+        current_player = self.current_player()
+
+        if current_player is None:
+            return "There is no current player.", []
+
+        if current_player.username != username:
+            return "It is not your turn.", []
+
+        if self.pile:
+            return (
+                "The pile is not empty. Use believe or not.",
+                [],
+            )
+
+        try:
+            data = shlex.split(args)
+        except ValueError:
+            return "Invalid command format.", []
+
+        if not data:
+            return "Specify a rank and card numbers.", []
+
+        declared_rank = data[0]
+
+        if declared_rank == "A":
+            return "Aces cannot be declared.", []
+
+        if declared_rank not in DECLARABLE_RANKS:
+            return "Invalid declared rank.", []
+
+        try:
+            indexes = [
+                int(value)
+                for value in data[1:]
+            ]
+        except ValueError:
+            return "Card numbers must be integers.", []
+
+        try:
+            cards = current_player.remove_cards(indexes)
+        except ValueError as error:
+            return str(error), []
+
+        self.pile.extend(cards)
+
+        self.last_move = Move(username, cards, declared_rank,)
+
+        self.declared_rank = declared_rank
+
+        if current_player.card_count() == 0:
+            self.pending_winner = username
+
+        self.next_player()
+
+        cards_number = len(cards)
+
+        events = [
+            (
+                "broadcast_ngettext",
+                "Player #{} {} placed {} card of rank {}.",
+                "Player #{} {} placed {} cards of rank {}.",
+                cards_number,
+                (
+                    current_player.number,
+                    current_player.username,
+                    cards_number,
+                    declared_rank,
+                ),
+            ),
+            ("sleep", 1),
+            ("prepare_turn",),
+        ]
+
+        return "", events
