@@ -532,3 +532,76 @@ class Game:
         ]
 
         return "", events
+
+    def believe(
+            self, args: str, username: str,
+            ) -> tuple[object, list[object]]:
+        """Place cards while keeping the declared rank."""
+        current_player = self.current_player()
+
+        if current_player.username != username:
+            return "It is not your turn.", []
+
+        if not self.pile:
+            return "The pile is empty. Use play.", []
+
+        if self.declared_rank is None:
+            return "There is no declared rank.", []
+
+        if self.pending_winner is not None:
+            return (
+                "The previous player placed the last cards. "
+                "You must use not.",
+                [],
+            )
+
+        try:
+            values = shlex.split(args)
+            indexes = [int(value) for value in values]
+        except ValueError:
+            return "Card numbers must be integers.", []
+
+        try:
+            cards = current_player.remove_cards(indexes)
+        except ValueError as error:
+            return str(error), []
+
+        self.pile.extend(cards)
+
+        self.last_move = Move(
+            username,
+            cards,
+            self.declared_rank,
+        )
+
+        if current_player.card_count() == 0:
+            self.pending_winner = username
+
+        self.next_player()
+
+        cards_number = len(cards)
+
+        events = [
+            (
+                "broadcast_ngettext",
+                (
+                    "Player #{} {} believed and placed "
+                    "{} more card of rank {}."
+                ),
+                (
+                    "Player #{} {} believed and placed "
+                    "{} more cards of rank {}."
+                ),
+                cards_number,
+                (
+                    current_player.number,
+                    current_player.username,
+                    cards_number,
+                    self.declared_rank,
+                ),
+            ),
+            ("sleep", 1),
+            ("prepare_turn",),
+        ]
+
+        return "", events
