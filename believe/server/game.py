@@ -425,6 +425,62 @@ class Game:
                 )
 
             if player.card_count() > 0:
+                events.append(
+                    (
+                        "broadcast",
+                        "It is now player #{} {}'s turn.",
+                        player.number,
+                        player.username,
+                    )
+                )
+
+                events.append(
+                    (
+                        "private",
+                        player.username,
+                        "It is your turn.\n\nYour cards:\n{}",
+                        player.hand_text(),
+                    )
+                )
+
+                if self.pending_winner is not None:
+                    events.append(
+                        (
+                            "private",
+                            player.username,
+                            (
+                                "The previous player placed the last cards. "
+                                "You must use not."
+                            ),
+                        )
+                    )
+
+                elif not self.pile:
+                    events.append(
+                        (
+                            "private",
+                            player.username,
+                            (
+                                "You start a new round.\n"
+                                "Choose a rank with play.\n"
+                                "Available ranks: 6 7 8 9 10 J D K."
+                            ),
+                        )
+                    )
+
+                else:
+                    events.append(
+                        (
+                            "private",
+                            player.username,
+                            (
+                                "Declared rank: {}.\n"
+                                "Choose believe or not."
+                            ),
+                            self.declared_rank,
+                        )
+                    )
+
                 return events
 
             player.finished = True
@@ -458,13 +514,12 @@ class Game:
         if not self.started:
             return "Game has not started.", []
 
-        current_player = self.current_player()
+        current_username = self.current_player()
 
-        if current_player is None:
-            return "There is no current player.", []
-
-        if current_player.username != username:
+        if current_username != username:
             return "It is not your turn.", []
+
+        current_player = self.players[current_username]
 
         if self.pile:
             return (
@@ -537,10 +592,12 @@ class Game:
             self, args: str, username: str,
             ) -> tuple[object, list[object]]:
         """Place cards while keeping the declared rank."""
-        current_player = self.current_player()
+        current_username = self.current_player()
 
-        if current_player.username != username:
+        if current_username != username:
             return "It is not your turn.", []
+
+        current_player = self.players[current_username]
 
         if not self.pile:
             return "The pile is empty. Use play.", []
@@ -610,9 +667,9 @@ class Game:
             self, args: str, username: str,
             ) -> tuple[object, list[object]]:
         """Check one card from the previous move."""
-        current_player = self.current_player()
+        current_username = self.current_player()
 
-        if current_player.username != username:
+        if current_username != username:
             return "It is not your turn.", []
 
         if self.last_move is None:
