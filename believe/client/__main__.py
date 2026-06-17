@@ -150,7 +150,7 @@ class CmdBelieve(cmd.Cmd):
             return
 
         index_path = (
-            Path(__file__).resolve().parents[2]
+            Path(__file__).resolve().parents[1]
             / "documentation"
             / "index.html"
         )

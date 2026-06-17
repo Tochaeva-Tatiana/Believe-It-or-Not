@@ -1,13 +1,22 @@
 """Asynchronous server entry point for Believe-It-or-Not."""
 
 import asyncio
+import gettext
 from asyncio import StreamReader
 from asyncio import StreamWriter
+from pathlib import Path
 
 from believe.common import HOST
 from believe.common import INVITATION_TIMEOUT
 from believe.common import MAX_PLAYERS
 from believe.common import PORT
+
+
+LOCALE_NAMES = {
+    "en": None,
+    "ru": "ru_RU",
+    "ru-2": "ru_BY",
+}
 
 
 def create_game() -> object | None:
@@ -72,32 +81,81 @@ class Server:
         self.invitation_deadline = None
         self.invitation_task = None
 
+    def translation(self, username: str) -> gettext.NullTranslations:
+        """Return translation object for one player."""
+        locale = self.locales.get(username, "en")
+        language = LOCALE_NAMES.get(locale)
+
+        if language is None:
+            return gettext.NullTranslations()
+
+        localedir = Path(__file__).resolve().parent / "po"
+
+        return gettext.translation(
+            "believe_server",
+            localedir=localedir,
+            languages=[language],
+            fallback=True,
+        )
+
+    def format_message(
+        self,
+        username: str,
+        message: object,
+        *args: object,
+    ) -> str:
+        """Translate and format one outgoing message."""
+        text = self.translation(username).gettext(str(message))
+
+        if args:
+            text = text.format(*args)
+
+        return text
+
     async def send_line(
         self,
         writer: StreamWriter,
         message: str,
     ) -> None:
-        """Send one text line to a client."""
+        """Send one raw text line to a client."""
         writer.write(f"{message}\n".encode())
         await writer.drain()
 
     async def send_to(
         self,
         username: str,
-        message: str,
+        message: object,
+        *args: object,
     ) -> None:
-        """Send one message to a connected client."""
+        """Send one translated message to a connected client."""
         writer = self.clients.get(username)
 
         if writer is None:
             return
 
-        await self.send_line(writer, message)
+        text = self.format_message(username, message, *args)
+        await self.send_line(writer, text)
 
-    async def broadcast_all(self, message: str) -> None:
-        """Send one message to all connected clients."""
+    async def broadcast_all(
+        self,
+        message: object,
+        *args: object,
+    ) -> None:
+        """Send one translated message to all connected clients."""
         for username in list(self.clients):
-            await self.send_to(username, message)
+            await self.send_to(username, message, *args)
+
+    async def broadcast_game(
+        self,
+        message: object,
+        *args: object,
+    ) -> None:
+        """Send one translated message to current game participants."""
+        player_order = getattr(self.game, "player_order", [])
+
+        for username in list(player_order):
+            if username in self.clients:
+                await self.send_to(username, message, *args)
 
     async def start_invitation(self, username: str) -> None:
         """Start waiting for players."""
@@ -128,8 +186,9 @@ class Server:
             if player_name != username:
                 await self.send_to(
                     player_name,
-                    f"Игрок {username} приглашает вас в игру. "
+                    "Игрок {} приглашает вас в игру. "
                     "Введите yes в течение 10 секунд.",
+                    username,
                 )
 
     async def accept_invitation(self, username: str) -> None:
@@ -174,15 +233,17 @@ class Server:
 
         await self.send_to(
             username,
-            f"Вы присоединились к игре как игрок №{player_number}.",
+            "Вы присоединились к игре как игрок №{}.",
+            player_number,
         )
 
         for player_name in self.accepted_players:
             if player_name != username:
                 await self.send_to(
                     player_name,
-                    f"Игрок №{player_number} {username} "
-                    "присоединился к игре.",
+                    "Игрок №{} {} присоединился к игре.",
+                    player_number,
+                    username,
                 )
 
         if len(self.accepted_players) == MAX_PLAYERS:
@@ -223,7 +284,12 @@ class Server:
         """Begin game with accepted players."""
         usernames = list(self.accepted_players)
 
-        if self.invitation_task is not None:
+        current_task = asyncio.current_task()
+
+        if (
+            self.invitation_task is not None
+            and self.invitation_task is not current_task
+        ):
             self.invitation_task.cancel()
 
         self.reset_invitation()
@@ -240,12 +306,13 @@ class Server:
 
         events = self.game.start(usernames)
 
-        await self.broadcast_all(
-            "Игра начинается. Участники: " + ", ".join(usernames),
+        await self.broadcast_game(
+            "Игра начинается. Участники: {}",
+            ", ".join(usernames),
         )
 
         if events:
-            await self.broadcast_all(
+            await self.broadcast_game(
                 "Игровые события будут обработаны "
                 "после добавления диспетчера событий.",
             )
@@ -317,7 +384,7 @@ class Server:
         if not data:
             return ""
 
-        return data.decode().strip()
+        return data.decode().rstrip("\r\n")
 
     async def handle_commands(
         self,
@@ -348,9 +415,10 @@ class Server:
                 await self.accept_invitation(username)
                 continue
 
-            await self.send_line(
-                writer,
-                f"Server skeleton received: {command}",
+            await self.send_to(
+                username,
+                "Server skeleton received: {}",
+                command,
             )
 
     async def run(self) -> None:
