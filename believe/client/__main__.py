@@ -1,14 +1,18 @@
 """Terminal client shell for Believe-It-or-Not."""
 
+import asyncio
 import cmd
 import shlex
 import sys
 import webbrowser
 from asyncio import StreamReader
 from asyncio import StreamWriter
+from concurrent.futures import TimeoutError as FutureTimeoutError
 from pathlib import Path
 
 from believe.common import DECLARABLE_RANKS
+from believe.common import HOST
+from believe.common import PORT
 
 
 class CmdBelieve(cmd.Cmd):
@@ -21,20 +25,41 @@ class CmdBelieve(cmd.Cmd):
         reader: StreamReader | None = None,
         writer: StreamWriter | None = None,
         username: str = "",
+        loop: asyncio.AbstractEventLoop | None = None,
     ) -> None:
         """Create command shell."""
         super().__init__()
         self.reader = reader
         self.writer = writer
         self.username = username
+        self.loop = loop
 
-    def request(self, command: str) -> None:
-        """Send one command line to the server."""
+    async def send_command(self, command: str) -> None:
+        """Send one command line to the server asynchronously."""
         if self.writer is None:
             print("Client is not connected.")
             return
 
         self.writer.write(f"{command}\n".encode())
+        await self.writer.drain()
+
+    def request(self, command: str) -> None:
+        """Send one command line to the server."""
+        if self.writer is None or self.loop is None:
+            print("Client is not connected.")
+            return
+
+        future = asyncio.run_coroutine_threadsafe(
+            self.send_command(command),
+            self.loop,
+        )
+
+        try:
+            future.result(timeout=1)
+        except FutureTimeoutError:
+            print("Server did not accept command in time.")
+        except (ConnectionError, RuntimeError, OSError):
+            print("Connection to server is lost.")
 
     def do_start(self, arg: str) -> None:
         """Start invitation for a new game."""
@@ -212,14 +237,94 @@ class CmdBelieve(cmd.Cmd):
         return True
 
 
+async def receive_messages(reader: StreamReader) -> None:
+    """Print messages received from the server."""
+    while True:
+        data = await reader.readline()
+
+        if not data:
+            print("\nConnection closed by server.")
+            return
+
+        message = data.decode().rstrip("\r\n")
+        print(f"\n{message}")
+
+
+async def connect(username: str) -> tuple[StreamReader, StreamWriter] | None:
+    """Connect to server and register username."""
+    try:
+        reader, writer = await asyncio.open_connection(HOST, PORT)
+    except OSError as error:
+        print(f"Cannot connect to server: {error}")
+        return None
+
+    writer.write(f"{username}\n".encode())
+    await writer.drain()
+
+    data = await reader.readline()
+
+    if not data:
+        print("Server closed connection.")
+        writer.close()
+        await writer.wait_closed()
+        return None
+
+    answer = data.decode().rstrip("\r\n")
+    print(answer)
+
+    if answer != "OK":
+        writer.close()
+        await writer.wait_closed()
+        return None
+
+    return reader, writer
+
+
+async def amain() -> None:
+    """Run connected client command shell."""
+    if len(sys.argv) != 2 or not sys.argv[1]:
+        print("Usage: python3 -m believe.client <username>")
+        return
+
+    username = sys.argv[1]
+    connection = await connect(username)
+
+    if connection is None:
+        return
+
+    reader, writer = connection
+    loop = asyncio.get_running_loop()
+    shell = CmdBelieve(
+        reader=reader,
+        writer=writer,
+        username=username,
+        loop=loop,
+    )
+    receiver_task = asyncio.create_task(receive_messages(reader))
+
+    try:
+        await asyncio.to_thread(shell.cmdloop)
+    finally:
+        receiver_task.cancel()
+
+        try:
+            await receiver_task
+        except asyncio.CancelledError:
+            pass
+
+        try:
+            writer.close()
+            await writer.wait_closed()
+        except (ConnectionError, RuntimeError, OSError):
+            pass
+
+
 def main() -> None:
-    """Run client command shell without network connection yet."""
-    username = ""
-
-    if len(sys.argv) > 1:
-        username = sys.argv[1]
-
-    CmdBelieve(username=username).cmdloop()
+    """Run client command shell."""
+    try:
+        asyncio.run(amain())
+    except KeyboardInterrupt:
+        print()
 
 
 if __name__ == "__main__":
