@@ -1,9 +1,14 @@
 """Terminal client shell for Believe-It-or-Not."""
 
 import cmd
+import shlex
 import sys
+import webbrowser
 from asyncio import StreamReader
 from asyncio import StreamWriter
+from pathlib import Path
+
+from believe.common import DECLARABLE_RANKS
 
 
 class CmdBelieve(cmd.Cmd):
@@ -54,6 +59,142 @@ class CmdBelieve(cmd.Cmd):
             return
 
         self.request("rules")
+
+    def do_play(self, arg: str) -> None:
+        """Put cards and declare a rank."""
+        try:
+            arguments = shlex.split(arg)
+        except ValueError as error:
+            print(error)
+            return
+
+        if not arguments:
+            print("Usage: play <rank> [card numbers]")
+            return
+
+        rank = arguments[0]
+
+        if rank not in DECLARABLE_RANKS:
+            print("Rank must be one of: " + " ".join(DECLARABLE_RANKS))
+            return
+
+        if len(arguments) == 1:
+            indexes = input("Enter card numbers separated by spaces: ")
+            indexes = indexes.strip()
+
+            if not indexes:
+                print("Usage: play <rank> <card numbers>")
+                return
+
+            self.request(f"play {rank} {indexes}")
+            return
+
+        self.request("play " + " ".join(arguments))
+
+    def do_believe(self, arg: str) -> None:
+        """Believe previous player and put more cards."""
+        try:
+            arguments = shlex.split(arg)
+        except ValueError as error:
+            print(error)
+            return
+
+        if not arguments:
+            indexes = input("Enter card numbers separated by spaces: ")
+            indexes = indexes.strip()
+
+            if not indexes:
+                print("Usage: believe <card numbers>")
+                return
+
+            self.request(f"believe {indexes}")
+            return
+
+        self.request("believe " + " ".join(arguments))
+
+    def do_not(self, arg: str) -> None:
+        """Doubt previous player and check one card."""
+        try:
+            arguments = shlex.split(arg)
+        except ValueError as error:
+            print(error)
+            return
+
+        if not arguments:
+            index = input("Choose one card number to check: ")
+            index = index.strip()
+
+            if not index:
+                print("Usage: not <card number>")
+                return
+
+            self.request(f"not {index}")
+            return
+
+        self.request("not " + " ".join(arguments))
+
+    def do_locale(self, arg: str) -> None:
+        """Change interface locale."""
+        locale = arg.strip()
+
+        if locale not in ("en", "ru", "ru-2"):
+            print("Usage: locale <en|ru|ru-2>")
+            return
+
+        self.request(f"locale {locale}")
+
+    def do_documentation(self, arg: str) -> None:
+        """Open local project documentation."""
+        if arg.strip():
+            print("Usage: documentation")
+            return
+
+        index_path = (
+            Path(__file__).resolve().parents[2]
+            / "documentation"
+            / "index.html"
+        )
+
+        if not index_path.exists():
+            print("Documentation is not built yet.")
+            return
+
+        webbrowser.open(index_path.as_uri())
+
+    def complete_play(
+        self,
+        text: str,
+        line: str,
+        begidx: int,
+        endidx: int,
+    ) -> list[str]:
+        """Complete rank for play command."""
+        arguments = line[:begidx].split()
+
+        if len(arguments) == 1:
+            return [
+                rank
+                for rank in DECLARABLE_RANKS
+                if rank.startswith(text)
+            ]
+
+        return []
+
+    def complete_locale(
+        self,
+        text: str,
+        line: str,
+        begidx: int,
+        endidx: int,
+    ) -> list[str]:
+        """Complete locale command argument."""
+        locales = ("en", "ru", "ru-2")
+
+        return [
+            locale
+            for locale in locales
+            if locale.startswith(text)
+        ]
 
     def do_quit(self, arg: str) -> bool:
         """Close the client session."""
