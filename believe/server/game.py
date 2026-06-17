@@ -206,7 +206,7 @@ class Game:
         self.started = False
         self.pending_winner = None
 
-    def start(self, usernames: list[str]) -> None:
+    def start(self, usernames: list[str]) -> list[object]:
         """Start a new game."""
         if len(usernames) < 2 or len(usernames) > 4:
             raise ValueError(
@@ -246,6 +246,7 @@ class Game:
         self.deck.deal(players)
 
         self.started = True
+        return [("prepare_turn",)]
 
     def stop(self) -> None:
         """Stop the current game and clear its state."""
@@ -273,11 +274,7 @@ class Game:
         if not self.active_order:
             return None
 
-        username = self.active_order[
-            self.current_player_index
-        ]
-
-        return self.players[username]
+        return self.active_order[self.current_player_index]
 
     def next_player(self):
         """Move the turn to the next active player."""
@@ -310,7 +307,7 @@ class Game:
 
         next_username = self.active_order[next_index]
 
-        return self.players[next_username]
+        return next_username
 
     def remove_active_player(self, username) -> None:
         """Remove a player from the active turn order."""
@@ -404,26 +401,15 @@ class Game:
                 events.append(("game_over",))
                 return events
 
-            player = self.current_player()
+            username = self.current_player()
 
-            if player is None:
+            if username is None:
                 return events
 
+            player = self.players[username]
             discarded_ranks = player.discard_sets()
 
             for rank in discarded_ranks:
-                events.append(
-                    (
-                        "private",
-                        player.username,
-                        (
-                            "Automatically discarded four cards "
-                            "of rank {}."
-                        ),
-                        rank,
-                    )
-                )
-
                 events.append(
                     (
                         "broadcast",
