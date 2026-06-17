@@ -1,8 +1,9 @@
 """Game objects for Believe-It-or-Not."""
 
 import random
+import shlex
 
-from believe.common import RANKS, SUITS
+from believe.common import RANKS, SUITS, DECLARABLE_RANKS
 
 
 class Card:
@@ -206,7 +207,7 @@ class Game:
         self.started = False
         self.pending_winner = None
 
-    def start(self, usernames: list[str]) -> None:
+    def start(self, usernames: list[str]) -> list[object]:
         """Start a new game."""
         if len(usernames) < 2 or len(usernames) > 4:
             raise ValueError(
@@ -246,6 +247,7 @@ class Game:
         self.deck.deal(players)
 
         self.started = True
+        return [("prepare_turn",)]
 
     def stop(self) -> None:
         """Stop the current game and clear its state."""
@@ -273,11 +275,7 @@ class Game:
         if not self.active_order:
             return None
 
-        username = self.active_order[
-            self.current_player_index
-        ]
-
-        return self.players[username]
+        return self.active_order[self.current_player_index]
 
     def next_player(self):
         """Move the turn to the next active player."""
@@ -310,7 +308,7 @@ class Game:
 
         next_username = self.active_order[next_index]
 
-        return self.players[next_username]
+        return next_username
 
     def remove_active_player(self, username) -> None:
         """Remove a player from the active turn order."""
@@ -404,26 +402,15 @@ class Game:
                 events.append(("game_over",))
                 return events
 
-            player = self.current_player()
+            username = self.current_player()
 
-            if player is None:
+            if username is None:
                 return events
 
+            player = self.players[username]
             discarded_ranks = player.discard_sets()
 
             for rank in discarded_ranks:
-                events.append(
-                    (
-                        "private",
-                        player.username,
-                        (
-                            "Automatically discarded four cards "
-                            "of rank {}."
-                        ),
-                        rank,
-                    )
-                )
-
                 events.append(
                     (
                         "broadcast",
@@ -465,3 +452,325 @@ class Game:
         events.append(("game_over",))
 
         return events
+
+    def play(self, args: str, username: str,) -> tuple[object, list[object]]:
+        """Place selected cards and start a new round."""
+        if not self.started:
+            return "Game has not started.", []
+
+        current_player = self.current_player()
+
+        if current_player is None:
+            return "There is no current player.", []
+
+        if current_player.username != username:
+            return "It is not your turn.", []
+
+        if self.pile:
+            return (
+                "The pile is not empty. Use believe or not.",
+                [],
+            )
+
+        try:
+            data = shlex.split(args)
+        except ValueError:
+            return "Invalid command format.", []
+
+        if not data:
+            return "Specify a rank and card numbers.", []
+
+        declared_rank = data[0]
+
+        if declared_rank == "A":
+            return "Aces cannot be declared.", []
+
+        if declared_rank not in DECLARABLE_RANKS:
+            return "Invalid declared rank.", []
+
+        try:
+            indexes = [
+                int(value)
+                for value in data[1:]
+            ]
+        except ValueError:
+            return "Card numbers must be integers.", []
+
+        try:
+            cards = current_player.remove_cards(indexes)
+        except ValueError as error:
+            return str(error), []
+
+        self.pile.extend(cards)
+
+        self.last_move = Move(username, cards, declared_rank,)
+
+        self.declared_rank = declared_rank
+
+        if current_player.card_count() == 0:
+            self.pending_winner = username
+
+        self.next_player()
+
+        cards_number = len(cards)
+
+        events = [
+            (
+                "broadcast_ngettext",
+                "Player #{} {} placed {} card of rank {}.",
+                "Player #{} {} placed {} cards of rank {}.",
+                cards_number,
+                (
+                    current_player.number,
+                    current_player.username,
+                    cards_number,
+                    declared_rank,
+                ),
+            ),
+            ("sleep", 1),
+            ("prepare_turn",),
+        ]
+
+        return "", events
+
+    def believe(
+            self, args: str, username: str,
+            ) -> tuple[object, list[object]]:
+        """Place cards while keeping the declared rank."""
+        current_player = self.current_player()
+
+        if current_player.username != username:
+            return "It is not your turn.", []
+
+        if not self.pile:
+            return "The pile is empty. Use play.", []
+
+        if self.declared_rank is None:
+            return "There is no declared rank.", []
+
+        if self.pending_winner is not None:
+            return (
+                "The previous player placed the last cards. "
+                "You must use not.",
+                [],
+            )
+
+        try:
+            values = shlex.split(args)
+            indexes = [int(value) for value in values]
+        except ValueError:
+            return "Card numbers must be integers.", []
+
+        try:
+            cards = current_player.remove_cards(indexes)
+        except ValueError as error:
+            return str(error), []
+
+        self.pile.extend(cards)
+
+        self.last_move = Move(
+            username,
+            cards,
+            self.declared_rank,
+        )
+
+        if current_player.card_count() == 0:
+            self.pending_winner = username
+
+        self.next_player()
+
+        cards_number = len(cards)
+
+        events = [
+            (
+                "broadcast_ngettext",
+                (
+                    "Player #{} {} believed and placed "
+                    "{} more card of rank {}."
+                ),
+                (
+                    "Player #{} {} believed and placed "
+                    "{} more cards of rank {}."
+                ),
+                cards_number,
+                (
+                    current_player.number,
+                    current_player.username,
+                    cards_number,
+                    self.declared_rank,
+                ),
+            ),
+            ("sleep", 1),
+            ("prepare_turn",),
+        ]
+
+        return "", events
+
+    def not_believe(
+            self, args: str, username: str,
+            ) -> tuple[object, list[object]]:
+        """Check one card from the previous move."""
+        current_player = self.current_player()
+
+        if current_player.username != username:
+            return "It is not your turn.", []
+
+        if self.last_move is None:
+            return "There is no previous move.", []
+
+        try:
+            values = shlex.split(args)
+        except ValueError:
+            return "Invalid command format.", []
+
+        if len(values) != 1:
+            return "Choose exactly one card.", []
+
+        try:
+            index = int(values[0])
+        except ValueError:
+            return "Card number must be an integer.", []
+
+        if index <= 0 or index > len(self.last_move.cards):
+            return "Card number is out of range.", []
+
+        checked_card = self.last_move.cards[index - 1]
+        previous_username = self.last_move.username
+        declared_rank = self.declared_rank
+        pile_size = len(self.pile)
+
+        events = [
+            (
+                "broadcast",
+                "Checked card #{}: {}.",
+                index,
+                str(checked_card),
+            )
+        ]
+
+        if checked_card.rank == declared_rank:
+            taker_username = username
+
+            events.append(
+                (
+                    "broadcast",
+                    "The checked card matches rank {}.",
+                    declared_rank,
+                )
+            )
+
+            if self.pending_winner == previous_username:
+                previous_player = self.players[previous_username]
+                previous_player.finished = True
+
+                if previous_username not in self.finish_order:
+                    self.finish_order.append(previous_username)
+
+                events.append(
+                    (
+                        "broadcast",
+                        "Player #{} {} finished the game. Place: {}.",
+                        previous_player.number,
+                        previous_player.username,
+                        len(self.finish_order),
+                    )
+                )
+
+                self.remove_active_player(previous_username)
+
+        else:
+            taker_username = previous_username
+
+            events.append(
+                (
+                    "broadcast",
+                    "The checked card does not match rank {}.",
+                    declared_rank,
+                )
+            )
+
+        taker = self.players[taker_username]
+        taker.add_cards(self.pile)
+
+        events.append(
+            (
+                "broadcast_ngettext",
+                "Player #{} {} takes {} card.",
+                "Player #{} {} takes {} cards.",
+                pile_size,
+                (
+                    taker.number,
+                    taker.username,
+                    pile_size,
+                ),
+            )
+        )
+
+        self.pile.clear()
+        self.last_move = None
+        self.declared_rank = None
+        self.pending_winner = None
+
+        if taker_username in self.active_order:
+            taker_index = self.active_order.index(taker_username)
+            self.current_player_index = (
+                taker_index + 1
+            ) % len(self.active_order)
+
+        events.append(("sleep", 1))
+        events.append(("prepare_turn",))
+
+        return "", events
+
+    def rules(self) -> tuple[object, list[object]]:
+        """Return the game rules."""
+        text = (
+            "GAME RULES\n\n"
+            "1. The game has from 2 to 4 players.\n"
+            "2. Players have 10 seconds to accept an invitation.\n"
+            "3. A deck of 36 cards is used.\n"
+            "4. The first player chooses a rank from 6 to K.\n"
+            "5. Aces cannot be declared.\n"
+            "6. The believe command adds cards to the pile.\n"
+            "7. The not command checks one card from the last move.\n"
+            "8. The loser of the check takes the whole pile.\n"
+            "9. The player who takes the pile skips a turn.\n"
+            "10. Four cards of one rank are discarded automatically.\n"
+            "11. Four aces are not discarded automatically.\n"
+            "12. A player's last cards must be checked.\n"
+            "13. A player without cards finishes the game.\n"
+            "14. The game ends when only aces remain."
+        )
+
+        return text, []
+
+    def process(self, command: str, username: str,
+                ) -> tuple[object, list[object]]:
+        """Process one game command."""
+        try:
+            data = shlex.split(command)
+        except ValueError:
+            return "Invalid command format.", []
+
+        if not data:
+            return "", []
+
+        command_name = data[0]
+        args = " ".join(data[1:])
+
+        if command_name == "rules":
+            if args:
+                return "The rules command takes no arguments.", []
+
+            return self.rules()
+
+        if command_name == "play":
+            return self.play(args, username)
+
+        if command_name == "believe":
+            return self.believe(args, username)
+
+        if command_name == "not":
+            return self.not_believe(args, username)
+
+        return "Invalid command.", []
