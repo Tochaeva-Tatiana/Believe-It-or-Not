@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+
+[project]
+name = "believe"
+version = "0.1.0"
+description = "Multiplayer terminal card game Believe-It-or-Not"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = []
+
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["believe*"]
