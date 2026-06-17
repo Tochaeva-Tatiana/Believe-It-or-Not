@@ -1,13 +1,30 @@
 """Asynchronous server entry point for Believe-It-or-Not."""
 
 import asyncio
+import gettext
 from asyncio import StreamReader
 from asyncio import StreamWriter
+from pathlib import Path
 
 from believe.common import HOST
 from believe.common import INVITATION_TIMEOUT
 from believe.common import MAX_PLAYERS
 from believe.common import PORT
+
+
+LOCALE_NAMES = {
+    "en": None,
+    "ru": "ru_RU",
+    "ru-2": "ru_BY",
+}
+
+
+GAME_COMMANDS = {
+    "rules",
+    "play",
+    "believe",
+    "not",
+}
 
 
 def create_game() -> object | None:
@@ -72,32 +89,147 @@ class Server:
         self.invitation_deadline = None
         self.invitation_task = None
 
+    def translation(self, username: str) -> gettext.NullTranslations:
+        """Return translation object for one player."""
+        locale = self.locales.get(username, "en")
+        language = LOCALE_NAMES.get(locale)
+
+        if language is None:
+            return gettext.NullTranslations()
+
+        localedir = Path(__file__).resolve().parent / "po"
+
+        return gettext.translation(
+            "believe_server",
+            localedir=localedir,
+            languages=[language],
+            fallback=True,
+        )
+
+    def format_message(
+        self,
+        username: str,
+        message: object,
+        *args: object,
+    ) -> str:
+        """Translate and format one outgoing message."""
+        text = self.translation(username).gettext(str(message))
+
+        if args:
+            text = text.format(*args)
+
+        return text
+
+    def format_plural_message(
+        self,
+        username: str,
+        singular: object,
+        plural: object,
+        number: int,
+        format_args: object,
+    ) -> str:
+        """Translate and format one plural message."""
+        text = self.translation(username).ngettext(
+            str(singular),
+            str(plural),
+            number,
+        )
+
+        if isinstance(format_args, tuple):
+            return text.format(*format_args)
+
+        if isinstance(format_args, list):
+            return text.format(*format_args)
+
+        return text.format(format_args)
+
     async def send_line(
         self,
         writer: StreamWriter,
         message: str,
     ) -> None:
-        """Send one text line to a client."""
+        """Send one raw text line to a client."""
         writer.write(f"{message}\n".encode())
         await writer.drain()
 
     async def send_to(
         self,
         username: str,
-        message: str,
+        message: object,
+        *args: object,
     ) -> None:
-        """Send one message to a connected client."""
+        """Send one translated message to a connected client."""
         writer = self.clients.get(username)
 
         if writer is None:
             return
 
-        await self.send_line(writer, message)
+        text = self.format_message(username, message, *args)
+        await self.send_line(writer, text)
 
-    async def broadcast_all(self, message: str) -> None:
-        """Send one message to all connected clients."""
+    async def send_plural_to(
+        self,
+        username: str,
+        singular: object,
+        plural: object,
+        number: int,
+        format_args: object,
+    ) -> None:
+        """Send one translated plural message to a connected client."""
+        writer = self.clients.get(username)
+
+        if writer is None:
+            return
+
+        text = self.format_plural_message(
+            username,
+            singular,
+            plural,
+            number,
+            format_args,
+        )
+        await self.send_line(writer, text)
+
+    async def broadcast_all(
+        self,
+        message: object,
+        *args: object,
+    ) -> None:
+        """Send one translated message to all connected clients."""
         for username in list(self.clients):
-            await self.send_to(username, message)
+            await self.send_to(username, message, *args)
+
+    async def broadcast_game(
+        self,
+        message: object,
+        *args: object,
+    ) -> None:
+        """Send one translated message to current game participants."""
+        player_order = getattr(self.game, "player_order", [])
+
+        for username in list(player_order):
+            if username in self.clients:
+                await self.send_to(username, message, *args)
+
+    async def broadcast_game_plural(
+        self,
+        singular: object,
+        plural: object,
+        number: int,
+        format_args: object,
+    ) -> None:
+        """Send one translated plural message to game participants."""
+        player_order = getattr(self.game, "player_order", [])
+
+        for username in list(player_order):
+            if username in self.clients:
+                await self.send_plural_to(
+                    username,
+                    singular,
+                    plural,
+                    number,
+                    format_args,
+                )
 
     async def start_invitation(self, username: str) -> None:
         """Start waiting for players."""
@@ -128,8 +260,9 @@ class Server:
             if player_name != username:
                 await self.send_to(
                     player_name,
-                    f"Игрок {username} приглашает вас в игру. "
+                    "Игрок {} приглашает вас в игру. "
                     "Введите yes в течение 10 секунд.",
+                    username,
                 )
 
     async def accept_invitation(self, username: str) -> None:
@@ -174,15 +307,17 @@ class Server:
 
         await self.send_to(
             username,
-            f"Вы присоединились к игре как игрок №{player_number}.",
+            "Вы присоединились к игре как игрок №{}.",
+            player_number,
         )
 
         for player_name in self.accepted_players:
             if player_name != username:
                 await self.send_to(
                     player_name,
-                    f"Игрок №{player_number} {username} "
-                    "присоединился к игре.",
+                    "Игрок №{} {} присоединился к игре.",
+                    player_number,
+                    username,
                 )
 
         if len(self.accepted_players) == MAX_PLAYERS:
@@ -223,7 +358,12 @@ class Server:
         """Begin game with accepted players."""
         usernames = list(self.accepted_players)
 
-        if self.invitation_task is not None:
+        current_task = asyncio.current_task()
+
+        if (
+            self.invitation_task is not None
+            and self.invitation_task is not current_task
+        ):
             self.invitation_task.cancel()
 
         self.reset_invitation()
@@ -240,15 +380,140 @@ class Server:
 
         events = self.game.start(usernames)
 
-        await self.broadcast_all(
-            "Игра начинается. Участники: " + ", ".join(usernames),
+        await self.broadcast_game(
+            "Игра начинается. Участники: {}",
+            ", ".join(usernames),
         )
 
-        if events:
-            await self.broadcast_all(
-                "Игровые события будут обработаны "
-                "после добавления диспетчера событий.",
+        await self.dispatch_events(events)
+
+    async def dispatch_events(self, events: object | None) -> None:
+        """Dispatch game events returned by the game model."""
+        if events is None:
+            return
+
+        event_queue = list(events)
+
+        while event_queue:
+            event = event_queue.pop(0)
+
+            if not isinstance(event, tuple):
+                continue
+
+            if not event:
+                continue
+
+            event_name = event[0]
+
+            if event_name == "broadcast":
+                await self.broadcast_game(*event[1:])
+                continue
+
+            if event_name == "broadcast_ngettext":
+                singular = event[1]
+                plural = event[2]
+                number = int(event[3])
+                format_args = event[4]
+                await self.broadcast_game_plural(
+                    singular,
+                    plural,
+                    number,
+                    format_args,
+                )
+                continue
+
+            if event_name == "private":
+                username = str(event[1])
+                message = event[2]
+                await self.send_to(username, message, *event[3:])
+                continue
+
+            if event_name == "sleep":
+                await asyncio.sleep(float(event[1]))
+                continue
+
+            if event_name == "prepare_turn":
+                if self.game is None or not hasattr(self.game, "prepare_turn"):
+                    continue
+
+                new_events = self.game.prepare_turn()
+
+                if new_events is not None:
+                    event_queue.extend(new_events)
+
+                continue
+
+            if event_name == "game_over":
+                if self.game is not None and hasattr(self.game, "stop"):
+                    self.game.stop()
+                continue
+
+    async def handle_locale_command(
+        self,
+        username: str,
+        command: str,
+    ) -> None:
+        """Handle locale command from one client."""
+        parts = command.split(maxsplit=1)
+
+        if len(parts) != 2:
+            await self.send_to(
+                username,
+                "Usage: locale en|ru|ru-2",
             )
+            return
+
+        locale = parts[1]
+
+        if locale not in LOCALE_NAMES:
+            await self.send_to(
+                username,
+                "Unknown locale. Available locales: {}",
+                ", ".join(LOCALE_NAMES),
+            )
+            return
+
+        self.locales[username] = locale
+        await self.send_to(username, "Locale changed to {}.", locale)
+
+    async def handle_game_command(
+        self,
+        username: str,
+        command: str,
+    ) -> None:
+        """Pass one game command to the game model."""
+        if self.game is None or not hasattr(self.game, "process"):
+            await self.send_to(
+                username,
+                "Игровая модель ещё не готова.",
+            )
+            return
+
+        command_name = command.split(maxsplit=1)[0]
+
+        if command_name != "rules" and not self.game_started():
+            await self.send_to(username, "Игра ещё не началась.")
+            return
+
+        player_order = getattr(self.game, "player_order", [])
+
+        if (
+            command_name != "rules"
+            and player_order
+            and username not in player_order
+        ):
+            await self.send_to(
+                username,
+                "Вы не участвуете в текущей игре.",
+            )
+            return
+
+        answer, events = self.game.process(command, username)
+
+        if answer:
+            await self.send_to(username, answer)
+
+        await self.dispatch_events(events)
 
     async def unregister_client(self, username: str) -> None:
         """Remove disconnected client from server state."""
@@ -257,6 +522,10 @@ class Server:
 
         was_owner = username == self.invitation_owner
         was_accepted = username in self.accepted_players
+        was_player = (
+            self.game_started()
+            and username in getattr(self.game, "player_order", [])
+        )
 
         self.clients.pop(username, None)
         self.locales.pop(username, None)
@@ -277,6 +546,15 @@ class Server:
                 for player_name in self.accepted_players
                 if player_name != username
             ]
+
+        if was_player:
+            await self.broadcast_game(
+                "Игрок {} отключился. Игра остановлена.",
+                username,
+            )
+
+            if self.game is not None and hasattr(self.game, "stop"):
+                self.game.stop()
 
     async def handle_client(
         self,
@@ -307,8 +585,11 @@ class Server:
         finally:
             await self.unregister_client(username)
 
-            writer.close()
-            await writer.wait_closed()
+            try:
+                writer.close()
+                await writer.wait_closed()
+            except (ConnectionError, RuntimeError):
+                pass
 
     async def read_username(self, reader: StreamReader) -> str:
         """Read username from the first client line."""
@@ -317,7 +598,7 @@ class Server:
         if not data:
             return ""
 
-        return data.decode().strip()
+        return data.decode().rstrip("\r\n")
 
     async def handle_commands(
         self,
@@ -348,9 +629,20 @@ class Server:
                 await self.accept_invitation(username)
                 continue
 
-            await self.send_line(
-                writer,
-                f"Server skeleton received: {command}",
+            if command.startswith("locale"):
+                await self.handle_locale_command(username, command)
+                continue
+
+            command_name = command.split(maxsplit=1)[0]
+
+            if command_name in GAME_COMMANDS:
+                await self.handle_game_command(username, command)
+                continue
+
+            await self.send_to(
+                username,
+                "Unknown command: {}",
+                command,
             )
 
     async def run(self) -> None:
