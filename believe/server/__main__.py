@@ -5,6 +5,7 @@ from asyncio import StreamReader
 from asyncio import StreamWriter
 
 from believe.common import HOST
+from believe.common import MAX_PLAYERS
 from believe.common import PORT
 
 
@@ -33,6 +34,26 @@ class Server:
         self.clients: dict[str, StreamWriter] = {}
         self.locales: dict[str, str] = {}
 
+    def game_started(self) -> bool:
+        """Check whether a game is already running."""
+        return bool(getattr(self.game, "started", False))
+
+    def validate_username(self, username: str) -> str | None:
+        """Return an error message if username cannot be registered."""
+        if not username or any(char.isspace() for char in username):
+            return "ERROR bad or busy username"
+
+        if username in self.clients:
+            return "ERROR bad or busy username"
+
+        if len(self.clients) >= MAX_PLAYERS:
+            return "ERROR server is full"
+
+        if self.game_started():
+            return "ERROR game already started"
+
+        return None
+
     async def send_line(
         self,
         writer: StreamWriter,
@@ -53,14 +74,23 @@ class Server:
         try:
             username = await self.read_username(reader)
 
-            if username:
-                self.clients[username] = writer
-                self.locales[username] = "en"
-                await self.send_line(writer, "OK")
+            if not username:
+                await self.send_line(writer, "ERROR bad or busy username")
+                return
+
+            error_message = self.validate_username(username)
+
+            if error_message is not None:
+                await self.send_line(writer, error_message)
+                return
+
+            self.clients[username] = writer
+            self.locales[username] = "en"
+            await self.send_line(writer, "OK")
 
             await self.handle_commands(username, reader, writer)
         finally:
-            if username:
+            if username in self.clients:
                 self.clients.pop(username, None)
                 self.locales.pop(username, None)
 
