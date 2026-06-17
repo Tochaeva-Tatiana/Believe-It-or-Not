@@ -19,6 +19,14 @@ LOCALE_NAMES = {
 }
 
 
+GAME_COMMANDS = {
+    "rules",
+    "play",
+    "believe",
+    "not",
+}
+
+
 def create_game() -> object | None:
     """Create a game object when the game model is available."""
     try:
@@ -379,8 +387,11 @@ class Server:
 
         await self.dispatch_events(events)
 
-    async def dispatch_events(self, events: list[object]) -> None:
+    async def dispatch_events(self, events: object | None) -> None:
         """Dispatch game events returned by the game model."""
+        if events is None:
+            return
+
         event_queue = list(events)
 
         while event_queue:
@@ -426,13 +437,83 @@ class Server:
                     continue
 
                 new_events = self.game.prepare_turn()
-                event_queue.extend(new_events)
+
+                if new_events is not None:
+                    event_queue.extend(new_events)
+
                 continue
 
             if event_name == "game_over":
                 if self.game is not None and hasattr(self.game, "stop"):
                     self.game.stop()
                 continue
+
+    async def handle_locale_command(
+        self,
+        username: str,
+        command: str,
+    ) -> None:
+        """Handle locale command from one client."""
+        parts = command.split(maxsplit=1)
+
+        if len(parts) != 2:
+            await self.send_to(
+                username,
+                "Usage: locale en|ru|ru-2",
+            )
+            return
+
+        locale = parts[1]
+
+        if locale not in LOCALE_NAMES:
+            await self.send_to(
+                username,
+                "Unknown locale. Available locales: {}",
+                ", ".join(LOCALE_NAMES),
+            )
+            return
+
+        self.locales[username] = locale
+        await self.send_to(username, "Locale changed to {}.", locale)
+
+    async def handle_game_command(
+        self,
+        username: str,
+        command: str,
+    ) -> None:
+        """Pass one game command to the game model."""
+        if self.game is None or not hasattr(self.game, "process"):
+            await self.send_to(
+                username,
+                "Игровая модель ещё не готова.",
+            )
+            return
+
+        command_name = command.split(maxsplit=1)[0]
+
+        if command_name != "rules" and not self.game_started():
+            await self.send_to(username, "Игра ещё не началась.")
+            return
+
+        player_order = getattr(self.game, "player_order", [])
+
+        if (
+            command_name != "rules"
+            and player_order
+            and username not in player_order
+        ):
+            await self.send_to(
+                username,
+                "Вы не участвуете в текущей игре.",
+            )
+            return
+
+        answer, events = self.game.process(command, username)
+
+        if answer:
+            await self.send_to(username, answer)
+
+        await self.dispatch_events(events)
 
     async def unregister_client(self, username: str) -> None:
         """Remove disconnected client from server state."""
@@ -441,6 +522,10 @@ class Server:
 
         was_owner = username == self.invitation_owner
         was_accepted = username in self.accepted_players
+        was_player = (
+            self.game_started()
+            and username in getattr(self.game, "player_order", [])
+        )
 
         self.clients.pop(username, None)
         self.locales.pop(username, None)
@@ -461,6 +546,15 @@ class Server:
                 for player_name in self.accepted_players
                 if player_name != username
             ]
+
+        if was_player:
+            await self.broadcast_game(
+                "Игрок {} отключился. Игра остановлена.",
+                username,
+            )
+
+            if self.game is not None and hasattr(self.game, "stop"):
+                self.game.stop()
 
     async def handle_client(
         self,
@@ -491,8 +585,11 @@ class Server:
         finally:
             await self.unregister_client(username)
 
-            writer.close()
-            await writer.wait_closed()
+            try:
+                writer.close()
+                await writer.wait_closed()
+            except (ConnectionError, RuntimeError):
+                pass
 
     async def read_username(self, reader: StreamReader) -> str:
         """Read username from the first client line."""
@@ -532,9 +629,19 @@ class Server:
                 await self.accept_invitation(username)
                 continue
 
+            if command.startswith("locale"):
+                await self.handle_locale_command(username, command)
+                continue
+
+            command_name = command.split(maxsplit=1)[0]
+
+            if command_name in GAME_COMMANDS:
+                await self.handle_game_command(username, command)
+                continue
+
             await self.send_to(
                 username,
-                "Server skeleton received: {}",
+                "Unknown command: {}",
                 command,
             )
 
