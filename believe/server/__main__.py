@@ -112,6 +112,29 @@ class Server:
 
         return text
 
+    def format_plural_message(
+        self,
+        username: str,
+        singular: object,
+        plural: object,
+        number: int,
+        format_args: object,
+    ) -> str:
+        """Translate and format one plural message."""
+        text = self.translation(username).ngettext(
+            str(singular),
+            str(plural),
+            number,
+        )
+
+        if isinstance(format_args, tuple):
+            return text.format(*format_args)
+
+        if isinstance(format_args, list):
+            return text.format(*format_args)
+
+        return text.format(format_args)
+
     async def send_line(
         self,
         writer: StreamWriter,
@@ -136,6 +159,29 @@ class Server:
         text = self.format_message(username, message, *args)
         await self.send_line(writer, text)
 
+    async def send_plural_to(
+        self,
+        username: str,
+        singular: object,
+        plural: object,
+        number: int,
+        format_args: object,
+    ) -> None:
+        """Send one translated plural message to a connected client."""
+        writer = self.clients.get(username)
+
+        if writer is None:
+            return
+
+        text = self.format_plural_message(
+            username,
+            singular,
+            plural,
+            number,
+            format_args,
+        )
+        await self.send_line(writer, text)
+
     async def broadcast_all(
         self,
         message: object,
@@ -156,6 +202,26 @@ class Server:
         for username in list(player_order):
             if username in self.clients:
                 await self.send_to(username, message, *args)
+
+    async def broadcast_game_plural(
+        self,
+        singular: object,
+        plural: object,
+        number: int,
+        format_args: object,
+    ) -> None:
+        """Send one translated plural message to game participants."""
+        player_order = getattr(self.game, "player_order", [])
+
+        for username in list(player_order):
+            if username in self.clients:
+                await self.send_plural_to(
+                    username,
+                    singular,
+                    plural,
+                    number,
+                    format_args,
+                )
 
     async def start_invitation(self, username: str) -> None:
         """Start waiting for players."""
@@ -311,11 +377,62 @@ class Server:
             ", ".join(usernames),
         )
 
-        if events:
-            await self.broadcast_game(
-                "Игровые события будут обработаны "
-                "после добавления диспетчера событий.",
-            )
+        await self.dispatch_events(events)
+
+    async def dispatch_events(self, events: list[object]) -> None:
+        """Dispatch game events returned by the game model."""
+        event_queue = list(events)
+
+        while event_queue:
+            event = event_queue.pop(0)
+
+            if not isinstance(event, tuple):
+                continue
+
+            if not event:
+                continue
+
+            event_name = event[0]
+
+            if event_name == "broadcast":
+                await self.broadcast_game(*event[1:])
+                continue
+
+            if event_name == "broadcast_ngettext":
+                singular = event[1]
+                plural = event[2]
+                number = int(event[3])
+                format_args = event[4]
+                await self.broadcast_game_plural(
+                    singular,
+                    plural,
+                    number,
+                    format_args,
+                )
+                continue
+
+            if event_name == "private":
+                username = str(event[1])
+                message = event[2]
+                await self.send_to(username, message, *event[3:])
+                continue
+
+            if event_name == "sleep":
+                await asyncio.sleep(float(event[1]))
+                continue
+
+            if event_name == "prepare_turn":
+                if self.game is None or not hasattr(self.game, "prepare_turn"):
+                    continue
+
+                new_events = self.game.prepare_turn()
+                event_queue.extend(new_events)
+                continue
+
+            if event_name == "game_over":
+                if self.game is not None and hasattr(self.game, "stop"):
+                    self.game.stop()
+                continue
 
     async def unregister_client(self, username: str) -> None:
         """Remove disconnected client from server state."""
