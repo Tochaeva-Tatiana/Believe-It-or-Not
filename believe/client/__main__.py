@@ -18,7 +18,7 @@ from believe.common import PORT
 class CmdBelieve(cmd.Cmd):
     """Believe-It-or-Not command line."""
 
-    prompt = "-> "
+    prompt = ""
 
     def __init__(
         self,
@@ -237,17 +237,28 @@ class CmdBelieve(cmd.Cmd):
         return True
 
 
-async def receive_messages(reader: StreamReader) -> None:
-    """Print messages received from the server."""
+async def receive_messages(
+    reader: StreamReader,
+    shell: CmdBelieve,
+) -> None:
+    """Print messages received from the server immediately."""
     while True:
         data = await reader.readline()
 
         if not data:
-            print("\nConnection closed by server.")
+            print(
+                "\nConnection closed by server.",
+                flush=True,
+            )
             return
 
         message = data.decode().rstrip("\r\n")
-        print(f"\n{message}")
+
+        print(
+            f"\n{message}\n{shell.prompt}",
+            end="",
+            flush=True,
+        )
 
 
 async def connect(username: str) -> tuple[StreamReader, StreamWriter] | None:
@@ -300,7 +311,7 @@ async def amain() -> None:
         username=username,
         loop=loop,
     )
-    receiver_task = asyncio.create_task(receive_messages(reader))
+    receiver_task = asyncio.create_task(receive_messages(reader, shell))
 
     try:
         await asyncio.to_thread(shell.cmdloop)
