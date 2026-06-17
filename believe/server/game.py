@@ -279,28 +279,189 @@ class Game:
 
         return self.players[username]
 
+    def next_player(self):
+        """Move the turn to the next active player."""
+        if not self.started:
+            return None
+
+        if not self.active_order:
+            return None
+
+        self.current_player_index += 1
+
+        if self.current_player_index >= len(self.active_order):
+            self.current_player_index = 0
+
+        return self.current_player()
+
+    def player_after(self, username):
+        """Return the active player after the given player."""
+        if not self.active_order:
+            return None
+
+        if username not in self.active_order:
+            return None
+
+        player_index = self.active_order.index(username)
+        next_index = player_index + 1
+
+        if next_index >= len(self.active_order):
+            next_index = 0
+
+        next_username = self.active_order[next_index]
+
+        return self.players[next_username]
+
+    def remove_active_player(self, username) -> None:
+        """Remove a player from the active turn order."""
+        if username not in self.active_order:
+            return
+
+        removed_index = self.active_order.index(username)
+
+        self.active_order.pop(removed_index)
+
+        if not self.active_order:
+            self.current_player_index = 0
+            return
+
+        if removed_index < self.current_player_index:
+            self.current_player_index -= 1
+
+        if self.current_player_index >= len(self.active_order):
+            self.current_player_index = 0
+
+    def only_aces_remain(self) -> bool:
+        """Return True when all remaining cards are aces."""
+        remaining_cards = []
+
+        for username in self.active_order:
+            player = self.players[username]
+            remaining_cards.extend(player.hand)
+
+        remaining_cards.extend(self.pile)
+
+        if not remaining_cards:
+            return False
+
+        for card in remaining_cards:
+            if card.rank != "A":
+                return False
+
+        return True
+
+    def game_should_end(self) -> bool:
+        """Return True when the game cannot continue."""
+        if not self.started:
+            return False
+
+        if self.pending_winner is not None:
+            return False
+
+        if len(self.active_order) <= 1:
+            return True
+
+        if self.only_aces_remain():
+            return True
+
+        return False
+
     def prepare_turn(self) -> list[object]:
-        """Discard complete sets before the current player's turn."""
+        """Prepare the current player for the next turn."""
         events = []
 
-        player = self.current_player()
-
-        if player is None:
+        if not self.started:
             return events
 
-        discarded_ranks = player.discard_sets()
+        while self.active_order:
+            if self.game_should_end():
+                if self.only_aces_remain():
+                    events.append(
+                        (
+                            "broadcast",
+                            (
+                                "Only aces remain in the game. "
+                                "The game is over."
+                            ),
+                        )
+                    )
+                else:
+                    last_username = self.active_order[0]
+                    last_player = self.players[last_username]
 
-        for rank in discarded_ranks:
+                    events.append(
+                        (
+                            "broadcast",
+                            (
+                                "Only one player remains with cards: "
+                                "player #{} {}."
+                            ),
+                            last_player.number,
+                            last_player.username,
+                        )
+                    )
+
+                events.append(("game_over",))
+                return events
+
+            player = self.current_player()
+
+            if player is None:
+                return events
+
+            discarded_ranks = player.discard_sets()
+
+            for rank in discarded_ranks:
+                events.append(
+                    (
+                        "private",
+                        player.username,
+                        (
+                            "Automatically discarded four cards "
+                            "of rank {}."
+                        ),
+                        rank,
+                    )
+                )
+
+                events.append(
+                    (
+                        "broadcast",
+                        (
+                            "Player #{} {} automatically discarded "
+                            "four cards of rank {}."
+                        ),
+                        player.number,
+                        player.username,
+                        rank,
+                    )
+                )
+
+            if player.card_count() > 0:
+                return events
+
+            player.finished = True
+
+            if player.username not in self.finish_order:
+                self.finish_order.append(player.username)
+
+            place = len(self.finish_order)
+
             events.append(
                 (
-                    "private",
-                    player.username,
+                    "broadcast",
                     (
-                        "Automatically discarded four cards "
-                        "of rank {}."
+                        "Player #{} {} has no cards and "
+                        "finished the game. Place: {}."
                     ),
-                    rank,
+                    player.number,
+                    player.username,
+                    place,
                 )
             )
+
+            self.remove_active_player(player.username)
+
+        events.append(("game_over",))
 
         return events
