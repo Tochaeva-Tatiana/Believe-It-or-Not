@@ -64,6 +64,23 @@ class Deck:
 
         return self.cards.pop()
 
+    def deal(self, players: list["Player"]) -> None:
+        """Deal all cards evenly between players."""
+        if len(players) < 2 or len(players) > 4:
+            raise ValueError(
+                "The number of players must be between 2 and 4"
+            )
+
+        for player in players:
+            player.clear_hand()
+
+        while self.cards:
+            for player in players:
+                if not self.cards:
+                    break
+
+                player.add_card(self.take_card())
+
 
 class Player:
     """Represent one participant of the game."""
@@ -139,3 +156,98 @@ class Move:
         self.username = username
         self.cards = list(cards)
         self.declared_rank = declared_rank
+
+
+class Game:
+    """Represent the current game state."""
+
+    def __init__(self) -> None:
+        """Create an empty game state."""
+        self.players = {}
+
+        self.player_order = []
+        self.active_order = []
+        self.finish_order = []
+
+        self.deck = Deck()
+        self.pile = []
+
+        self.last_move = None
+        self.declared_rank = None
+
+        self.current_player_index = 0
+        self.started = False
+        self.pending_winner = None
+
+    def start(self, usernames: list[str]) -> None:
+        """Start a new game."""
+        if len(usernames) < 2 or len(usernames) > 4:
+            raise ValueError(
+                "The number of players must be between 2 and 4"
+            )
+
+        if len(usernames) != len(set(usernames)):
+            raise ValueError("Player names must be unique")
+
+        self.players.clear()
+
+        self.player_order = list(usernames)
+        self.active_order = list(usernames)
+        self.finish_order = []
+
+        self.pile = []
+        self.last_move = None
+        self.declared_rank = None
+        self.pending_winner = None
+
+        self.current_player_index = 0
+
+        self.deck = Deck()
+        self.deck.shuffle()
+
+        for number, username in enumerate(usernames, start=1):
+            self.players[username] = Player(
+                username,
+                number,
+            )
+
+        players = [
+            self.players[username]
+            for username in usernames
+        ]
+
+        self.deck.deal(players)
+
+        self.started = True
+
+    def stop(self) -> None:
+        """Stop the current game and clear its state."""
+        self.players.clear()
+
+        self.player_order = []
+        self.active_order = []
+        self.finish_order = []
+
+        self.deck = Deck()
+        self.pile = []
+
+        self.last_move = None
+        self.declared_rank = None
+
+        self.current_player_index = 0
+        self.started = False
+        self.pending_winner = None
+
+    def current_player(self):
+        """Return the player whose turn it is."""
+        if not self.started:
+            return None
+
+        if not self.active_order:
+            return None
+
+        username = self.active_order[
+            self.current_player_index
+        ]
+
+        return self.players[username]
