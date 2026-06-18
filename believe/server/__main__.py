@@ -234,11 +234,14 @@ class Server:
     async def start_invitation(self, username: str) -> None:
         """Start waiting for players."""
         if self.game_started():
-            await self.send_to(username, "Игра уже началась.")
+            await self.send_to(username, "The game has already started.")
             return
 
         if self.invitation_active():
-            await self.send_to(username, "Набор игроков уже идёт.")
+            await self.send_to(
+                username,
+                "Player recruitment is already in progress.",
+            )
             return
 
         if username not in self.clients:
@@ -252,23 +255,22 @@ class Server:
 
         await self.send_to(
             username,
-            "Приглашение отправлено. "
-            "Ожидание игроков: 10 секунд.",
+            "Invitation sent. Waiting for players: 10 seconds.",
         )
 
         for player_name in list(self.clients):
             if player_name != username:
                 await self.send_to(
                     player_name,
-                    "Игрок {} приглашает вас в игру. "
-                    "Введите yes в течение 10 секунд.",
+                    "Player {} invites you to join the game. "
+                    "Type yes within 10 seconds.",
                     username,
                 )
 
     async def accept_invitation(self, username: str) -> None:
         """Accept active game invitation."""
         if not self.invitation_active():
-            await self.send_to(username, "Сейчас нет активного приглашения.")
+            await self.send_to(username, "There is no active invitation.")
             return
 
         if self.invitation_deadline is not None:
@@ -277,28 +279,28 @@ class Server:
             if loop.time() > self.invitation_deadline:
                 await self.send_to(
                     username,
-                    "Сейчас нет активного приглашения.",
+                    "There is no active invitation.",
                 )
                 return
 
         if username == self.invitation_owner:
             await self.send_to(
                 username,
-                "Вы уже являетесь создателем этой игры.",
+                "You are already the creator of this game.",
             )
             return
 
         if username in self.accepted_players:
             await self.send_to(
                 username,
-                "Вы уже присоединились к этой игре.",
+                "You have already joined this game.",
             )
             return
 
         if len(self.accepted_players) >= MAX_PLAYERS:
             await self.send_to(
                 username,
-                "В игре уже участвуют четыре игрока.",
+                "Four players are already participating in the game.",
             )
             return
 
@@ -307,7 +309,7 @@ class Server:
 
         await self.send_to(
             username,
-            "Вы присоединились к игре как игрок №{}.",
+            "You joined the game as player #{}.",
             player_number,
         )
 
@@ -315,7 +317,7 @@ class Server:
             if player_name != username:
                 await self.send_to(
                     player_name,
-                    "Игрок №{} {} присоединился к игре.",
+                    "Player #{} {} joined the game.",
                     player_number,
                     username,
                 )
@@ -325,8 +327,8 @@ class Server:
                 self.invitation_task.cancel()
 
             await self.broadcast_all(
-                "Набрано максимальное количество игроков. "
-                "Игра начинается досрочно.",
+                "The maximum number of players has been reached. "
+                "The game starts early.",
             )
             await self.begin_game()
 
@@ -343,11 +345,11 @@ class Server:
             if owner is not None:
                 await self.send_to(
                     owner,
-                    "Никто не присоединился. Игра не началась.",
+                    "Nobody joined. The game did not start.",
                 )
 
             await self.broadcast_all(
-                "Набор игроков завершён без начала игры.",
+                "Player recruitment ended without starting the game.",
             )
             self.reset_invitation()
             return
@@ -373,15 +375,15 @@ class Server:
 
         if self.game is None or not hasattr(self.game, "start"):
             await self.broadcast_all(
-                "Набор игроков завершён. "
-                "Игровая модель ещё не готова.",
+                "Player recruitment ended. "
+                "The game model is not ready yet.",
             )
             return
 
         events = self.game.start(usernames)
 
         await self.broadcast_game(
-            "Игра начинается. Участники: {}",
+            "The game starts. Players: {}",
             ", ".join(usernames),
         )
 
@@ -485,14 +487,14 @@ class Server:
         if self.game is None or not hasattr(self.game, "process"):
             await self.send_to(
                 username,
-                "Игровая модель ещё не готова.",
+                "The game model is not ready yet.",
             )
             return
 
         command_name = command.split(maxsplit=1)[0]
 
         if command_name != "rules" and not self.game_started():
-            await self.send_to(username, "Игра ещё не началась.")
+            await self.send_to(username, "The game has not started yet.")
             return
 
         player_order = getattr(self.game, "player_order", [])
@@ -504,7 +506,7 @@ class Server:
         ):
             await self.send_to(
                 username,
-                "Вы не участвуете в текущей игре.",
+                "You are not participating in the current game.",
             )
             return
 
@@ -536,7 +538,7 @@ class Server:
 
             self.reset_invitation()
             await self.broadcast_all(
-                "Создатель игры вышел. Набор игроков отменён.",
+                "The game creator left. Player recruitment was cancelled.",
             )
             return
 
@@ -549,7 +551,7 @@ class Server:
 
         if was_player:
             await self.broadcast_game(
-                "Игрок {} отключился. Игра остановлена.",
+                "Player {} disconnected. The game has been stopped.",
                 username,
             )
 
