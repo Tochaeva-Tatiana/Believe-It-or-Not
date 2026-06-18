@@ -20,3 +20,12 @@ believe-server = "believe.server.__main__:serve"
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["believe*"]
+
+
+[tool.setuptools.package-data]
+"believe.server" = [
+    "po/*/LC_MESSAGES/*.mo",
+]
+"believe" = [
+    "documentation/**/*",
+]

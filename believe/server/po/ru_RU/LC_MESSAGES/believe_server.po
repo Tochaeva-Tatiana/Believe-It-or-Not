@@ -8,136 +8,256 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Believe-It-or-Not 0.1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-06-18 01:31+0000\n"
+"POT-Creation-Date: 2026-06-18 05:30+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: \n"
 "Language: ru_RU\n"
 "Language-Team: ru_RU\n"
-"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : "
-"n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
+"n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.18.0\n"
 
+#: believe/client/__main__.py:84 believe/client/__main__.py:93
+msgid "Client is not connected."
+msgstr ""
+
+#: believe/client/__main__.py:104
+msgid "Server did not accept command in time."
+msgstr ""
+
+#: believe/client/__main__.py:106
+msgid "Connection to server is lost."
+msgstr ""
+
+#: believe/client/__main__.py:111
+msgid "Usage: start"
+msgstr ""
+
+#: believe/client/__main__.py:119
+msgid "Usage: yes"
+msgstr ""
+
+#: believe/client/__main__.py:127
+msgid "Usage: rules"
+msgstr ""
+
+#: believe/client/__main__.py:141 believe/client/__main__.py:154
+#, fuzzy
+msgid "Usage: play <rank> <card numbers>"
+msgstr "Укажите номинал и номера карт."
+
+#: believe/client/__main__.py:148
+msgid "Rank must be one of: "
+msgstr ""
+
+#: believe/client/__main__.py:168
+msgid "Usage: believe <card numbers>"
+msgstr ""
+
+#: believe/client/__main__.py:182
+msgid "Usage: not <card number>"
+msgstr ""
+
+#: believe/client/__main__.py:192
+#, fuzzy
+msgid "Usage: locale <en|ru|ru-2>"
+msgstr "Использование: locale en|ru|ru-2"
+
+#: believe/client/__main__.py:201
+msgid "Usage: documentation"
+msgstr ""
+
+#: believe/client/__main__.py:211
+msgid "Documentation is not built yet."
+msgstr ""
+
+#: believe/client/__main__.py:254
+msgid "Usage: quit"
+msgstr ""
+
+#: believe/client/__main__.py:277
+msgid "Connection closed by server."
+msgstr ""
+
+#: believe/client/__main__.py:295
+msgid "Cannot connect to server:"
+msgstr ""
+
+#: believe/client/__main__.py:304
+msgid "Server closed connection."
+msgstr ""
+
+#: believe/client/__main__.py:323
+msgid "Usage: python3 -m believe.client <username>"
+msgstr ""
+
+#: believe/server/__main__.py:242
 msgid "The game has already started."
 msgstr "Игра уже началась."
 
+#: believe/server/__main__.py:248
 msgid "Player recruitment is already in progress."
 msgstr "Набор игроков уже идёт."
 
+#: believe/server/__main__.py:263
 msgid "Invitation sent. Waiting for players: 10 seconds."
 msgstr "Приглашение отправлено. Ожидание игроков: 10 секунд."
 
+#: believe/server/__main__.py:271
+#, python-brace-format
 msgid "Player {} invites you to join the game. Type yes within 10 seconds."
 msgstr "Игрок {} приглашает вас в игру. Введите yes в течение 10 секунд."
 
+#: believe/server/__main__.py:280 believe/server/__main__.py:289
 msgid "There is no active invitation."
 msgstr "Сейчас нет активного приглашения."
 
+#: believe/server/__main__.py:296
 msgid "You are already the creator of this game."
 msgstr "Вы уже являетесь создателем этой игры."
 
+#: believe/server/__main__.py:303
 msgid "You have already joined this game."
 msgstr "Вы уже присоединились к этой игре."
 
+#: believe/server/__main__.py:310
 msgid "Four players are already participating in the game."
 msgstr "В игре уже участвуют четыре игрока."
 
+#: believe/server/__main__.py:319
+#, python-brace-format
 msgid "You joined the game as player #{}."
 msgstr "Вы присоединились к игре как игрок №{}."
 
+#: believe/server/__main__.py:327
+#, python-brace-format
 msgid "Player #{} {} joined the game."
 msgstr "Игрок №{} {} присоединился к игре."
 
+#: believe/server/__main__.py:338
 msgid "The maximum number of players has been reached. The game starts early."
 msgstr "Набрано максимальное количество игроков. Игра начинается досрочно."
 
+#: believe/server/__main__.py:357
 msgid "Nobody joined. The game did not start."
 msgstr "Никто не присоединился. Игра не началась."
 
+#: believe/server/__main__.py:361
 msgid "Player recruitment ended without starting the game."
 msgstr "Набор игроков завершён без начала игры."
 
+#: believe/server/__main__.py:388
 msgid "Player recruitment ended. The game model is not ready yet."
 msgstr "Набор игроков завершён. Игровая модель ещё не готова."
 
+#: believe/server/__main__.py:397
+#, python-brace-format
 msgid "The game starts. Players: {}"
 msgstr "Игра начинается. Участники: {}"
 
+#: believe/server/__main__.py:475
 msgid "Usage: locale en|ru|ru-2"
 msgstr "Использование: locale en|ru|ru-2"
 
+#: believe/server/__main__.py:484
+#, python-brace-format
 msgid "Unknown locale. Available locales: {}"
 msgstr "Неизвестная локаль. Доступные локали: {}"
 
+#: believe/server/__main__.py:490
+#, python-brace-format
 msgid "Locale changed to {}."
 msgstr "Локаль изменена на {}."
 
+#: believe/server/__main__.py:501
 msgid "The game model is not ready yet."
 msgstr "Игровая модель ещё не готова."
 
+#: believe/server/__main__.py:508
 msgid "The game has not started yet."
 msgstr "Игра ещё не началась."
 
+#: believe/server/__main__.py:520
 msgid "You are not participating in the current game."
 msgstr "Вы не участвуете в текущей игре."
 
+#: believe/server/__main__.py:552
 msgid "The game creator left. Player recruitment was cancelled."
 msgstr "Создатель игры вышел. Набор игроков отменён."
 
+#: believe/server/__main__.py:565
+#, python-brace-format
 msgid "Player {} disconnected. The game has been stopped."
 msgstr "Игрок {} отключился. Игра остановлена."
 
+#: believe/server/__main__.py:657
+#, python-brace-format
 msgid "Unknown command: {}"
 msgstr "Неизвестная команда: {}"
 
-
+#: believe/server/game.py:30
 msgid "Unknown suit"
 msgstr "Неизвестная масть"
 
+#: believe/server/game.py:33
 msgid "Unknown rank"
 msgstr "Неизвестный номинал"
 
+#: believe/server/game.py:79
 msgid "The deck is empty"
 msgstr "Колода пуста"
 
+#: believe/server/game.py:87 believe/server/game.py:229
 msgid "The number of players must be between 2 and 4"
 msgstr "Количество игроков должно быть от 2 до 4"
 
+#: believe/server/game.py:122
 msgid "No cards selected"
 msgstr "Не выбрано ни одной карты"
 
+#: believe/server/game.py:125
 msgid "Card numbers must be integers"
 msgstr "Номера карт должны быть целыми числами"
 
+#: believe/server/game.py:128
 msgid "Card numbers must be positive"
 msgstr "Номера карт должны быть положительными"
 
+#: believe/server/game.py:131
 msgid "Card numbers must be unique"
 msgstr "Номера карт не должны повторяться"
 
+#: believe/server/game.py:134
 msgid "Card number is out of range"
 msgstr "Номер карты вне допустимого диапазона"
 
+#: believe/server/game.py:233
 msgid "Player names must be unique"
 msgstr "Имена игроков не должны повторяться"
 
+#: believe/server/game.py:396
 msgid "Only aces remain in the game. The game is over."
 msgstr "В игре остались только тузы. Игра окончена."
 
+#: believe/server/game.py:409
 #, python-brace-format
 msgid "Only one player remains with cards: player #{} {}."
 msgstr "С картами остался только один игрок: игрок №{} {}."
 
+#: believe/server/game.py:433
 #, python-brace-format
 msgid "Player #{} {} automatically discarded four cards of rank {}."
 msgstr "Игрок №{} {} автоматически сбросил четыре карты номинала {}."
 
+#: believe/server/game.py:446
 #, python-brace-format
 msgid "It is now player #{} {}'s turn."
 msgstr "Сейчас ходит игрок №{} {}."
 
+#: believe/server/game.py:456
 #, python-brace-format
 msgid ""
 "It is your turn.\n"
@@ -150,9 +270,13 @@ msgstr ""
 "Ваши карты:\n"
 "{}"
 
+#: believe/server/game.py:467 believe/server/game.py:632
 msgid "The previous player placed the last cards. You must use not."
-msgstr "Предыдущий игрок выложил последние карты. Вы должны использовать команду not."
+msgstr ""
+"Предыдущий игрок выложил последние карты. Вы должны использовать команду "
+"not."
 
+#: believe/server/game.py:479
 msgid ""
 "You start a new round.\n"
 "Choose a rank with play.\n"
@@ -162,6 +286,7 @@ msgstr ""
 "Выберите номинал с помощью команды play.\n"
 "Доступные номиналы: 6 7 8 9 10 J D K."
 
+#: believe/server/game.py:492
 #, python-brace-format
 msgid ""
 "Declared rank: {}.\n"
@@ -170,34 +295,46 @@ msgstr ""
 "Объявленный номинал: {}.\n"
 "Выберите believe или not."
 
+#: believe/server/game.py:512
 #, python-brace-format
 msgid "Player #{} {} has no cards and finished the game. Place: {}."
 msgstr "У игрока №{} {} не осталось карт, и он завершил игру. Место: {}."
 
+#: believe/server/game.py:530
 msgid "Game has not started."
 msgstr "Игра ещё не началась."
 
+#: believe/server/game.py:535 believe/server/game.py:619
+#: believe/server/game.py:698
 msgid "It is not your turn."
 msgstr "Сейчас не ваш ход."
 
+#: believe/server/game.py:541
 msgid "The pile is not empty. Use believe or not."
 msgstr "Стопка не пуста. Используйте believe или not."
 
+#: believe/server/game.py:548 believe/server/game.py:706
+#: believe/server/game.py:841
 msgid "Invalid command format."
 msgstr "Неверный формат команды."
 
+#: believe/server/game.py:551
 msgid "Specify a rank and card numbers."
 msgstr "Укажите номинал и номера карт."
 
+#: believe/server/game.py:556
 msgid "Aces cannot be declared."
 msgstr "Тузы нельзя объявлять."
 
+#: believe/server/game.py:559
 msgid "Invalid declared rank."
 msgstr "Недопустимый объявленный номинал."
 
+#: believe/server/game.py:567 believe/server/game.py:642
 msgid "Card numbers must be integers."
 msgstr "Номера карт должны быть целыми числами."
 
+#: believe/server/game.py:588
 #, python-brace-format
 msgid "Player #{} {} placed {} card of rank {}."
 msgid_plural "Player #{} {} placed {} cards of rank {}."
@@ -205,12 +342,15 @@ msgstr[0] "Игрок №{} {} положил {} карту номинала {}.
 msgstr[1] "Игрок №{} {} положил {} карты номинала {}."
 msgstr[2] "Игрок №{} {} положил {} карт номинала {}."
 
+#: believe/server/game.py:624
 msgid "The pile is empty. Use play."
 msgstr "Стопка пуста. Используйте play."
 
+#: believe/server/game.py:627
 msgid "There is no declared rank."
 msgstr "Объявленный номинал отсутствует."
 
+#: believe/server/game.py:665
 #, python-brace-format
 msgid "Player #{} {} believed and placed {} more card of rank {}."
 msgid_plural "Player #{} {} believed and placed {} more cards of rank {}."
@@ -218,34 +358,43 @@ msgstr[0] "Игрок №{} {} поверил и положил ещё {} кар
 msgstr[1] "Игрок №{} {} поверил и положил ещё {} карты номинала {}."
 msgstr[2] "Игрок №{} {} поверил и положил ещё {} карт номинала {}."
 
+#: believe/server/game.py:701
 msgid "There is no previous move."
 msgstr "Предыдущего хода нет."
 
+#: believe/server/game.py:709
 msgid "Choose exactly one card."
 msgstr "Выберите ровно одну карту."
 
+#: believe/server/game.py:714
 msgid "Card number must be an integer."
 msgstr "Номер карты должен быть целым числом."
 
+#: believe/server/game.py:717
 msgid "Card number is out of range."
 msgstr "Номер карты вне допустимого диапазона."
 
+#: believe/server/game.py:727
 #, python-brace-format
 msgid "Checked card #{}: {}."
 msgstr "Проверена карта №{}: {}."
 
+#: believe/server/game.py:739
 #, python-brace-format
 msgid "The checked card matches rank {}."
 msgstr "Проверенная карта соответствует номиналу {}."
 
+#: believe/server/game.py:754
 #, python-brace-format
 msgid "Player #{} {} finished the game. Place: {}."
 msgstr "Игрок №{} {} завершил игру. Место: {}."
 
+#: believe/server/game.py:769
 #, python-brace-format
 msgid "The checked card does not match rank {}."
 msgstr "Проверенная карта не соответствует номиналу {}."
 
+#: believe/server/game.py:778
 #, python-brace-format
 msgid "Player #{} {} takes {} card."
 msgid_plural "Player #{} {} takes {} cards."
@@ -253,6 +402,7 @@ msgstr[0] "Игрок №{} {} забирает {} карту."
 msgstr[1] "Игрок №{} {} забирает {} карты."
 msgstr[2] "Игрок №{} {} забирает {} карт."
 
+#: believe/server/game.py:816
 msgid ""
 "GAME RULES\n"
 "\n"
@@ -288,9 +438,11 @@ msgstr ""
 "13. Игрок без карт завершает игру.\n"
 "14. Игра заканчивается, когда остаются только тузы."
 
+#: believe/server/game.py:851
 msgid "The rules command takes no arguments."
 msgstr "Команда rules не принимает аргументов."
 
+#: believe/server/game.py:864
 msgid "Invalid command."
 msgstr "Недопустимая команда."
 
