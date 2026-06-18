@@ -6,16 +6,31 @@ import shlex
 from believe.common import RANKS, SUITS, DECLARABLE_RANKS
 
 
+def _(message: str) -> str:
+    """Mark a singular message for translation."""
+    return message
+
+
+def ngettext(
+    singular: str,
+    plural: str,
+    number: int,
+) -> tuple[str, str]:
+    """Mark plural messages for translation."""
+    del number
+    return singular, plural
+
+
 class Card:
     """Represent one playing card."""
 
     def __init__(self, suit: str, rank: str) -> None:
         """Create a card with the given suit and rank."""
         if suit not in SUITS:
-            raise ValueError("Unknown suit")
+            raise ValueError(_("Unknown suit"))
 
         if rank not in RANKS:
-            raise ValueError("Unknown rank")
+            raise ValueError(_("Unknown rank"))
 
         self.suit = suit
         self.rank = rank
@@ -61,7 +76,7 @@ class Deck:
     def take_card(self) -> Card:
         """Remove and return one card from the deck."""
         if not self.cards:
-            raise IndexError("The deck is empty")
+            raise IndexError(_("The deck is empty"))
 
         return self.cards.pop()
 
@@ -69,7 +84,7 @@ class Deck:
         """Deal all cards evenly between players."""
         if len(players) < 2 or len(players) > 4:
             raise ValueError(
-                "The number of players must be between 2 and 4"
+                _("The number of players must be between 2 and 4")
             )
 
         for player in players:
@@ -104,19 +119,19 @@ class Player:
     def remove_cards(self, indexes: list[int]) -> list[Card]:
         """Remove and return cards selected by one-based indexes."""
         if not indexes:
-            raise ValueError("No cards selected")
+            raise ValueError(_("No cards selected"))
 
         if any(not isinstance(index, int) for index in indexes):
-            raise ValueError("Card numbers must be integers")
+            raise ValueError(_("Card numbers must be integers"))
 
         if any(index <= 0 for index in indexes):
-            raise ValueError("Card numbers must be positive")
+            raise ValueError(_("Card numbers must be positive"))
 
         if len(indexes) != len(set(indexes)):
-            raise ValueError("Card numbers must be unique")
+            raise ValueError(_("Card numbers must be unique"))
 
         if any(index > len(self.hand) for index in indexes):
-            raise ValueError("Card number is out of range")
+            raise ValueError(_("Card number is out of range"))
 
         selected_cards = [
             self.hand[index - 1]
@@ -211,11 +226,11 @@ class Game:
         """Start a new game."""
         if len(usernames) < 2 or len(usernames) > 4:
             raise ValueError(
-                "The number of players must be between 2 and 4"
+                _("The number of players must be between 2 and 4")
             )
 
         if len(usernames) != len(set(usernames)):
-            raise ValueError("Player names must be unique")
+            raise ValueError(_("Player names must be unique"))
 
         self.players.clear()
 
@@ -377,7 +392,7 @@ class Game:
                     events.append(
                         (
                             "broadcast",
-                            (
+                            _(
                                 "Only aces remain in the game. "
                                 "The game is over."
                             ),
@@ -390,7 +405,7 @@ class Game:
                     events.append(
                         (
                             "broadcast",
-                            (
+                            _(
                                 "Only one player remains with cards: "
                                 "player #{} {}."
                             ),
@@ -414,7 +429,7 @@ class Game:
                 events.append(
                     (
                         "broadcast",
-                        (
+                        _(
                             "Player #{} {} automatically discarded "
                             "four cards of rank {}."
                         ),
@@ -428,7 +443,7 @@ class Game:
                 events.append(
                     (
                         "broadcast",
-                        "It is now player #{} {}'s turn.",
+                        _("It is now player #{} {}'s turn."),
                         player.number,
                         player.username,
                     )
@@ -438,7 +453,7 @@ class Game:
                     (
                         "private",
                         player.username,
-                        "It is your turn.\n\nYour cards:\n{}",
+                        _("It is your turn.\n\nYour cards:\n{}"),
                         player.hand_text(),
                     )
                 )
@@ -448,7 +463,7 @@ class Game:
                         (
                             "private",
                             player.username,
-                            (
+                            _(
                                 "The previous player placed the last cards. "
                                 "You must use not."
                             ),
@@ -460,7 +475,7 @@ class Game:
                         (
                             "private",
                             player.username,
-                            (
+                            _(
                                 "You start a new round.\n"
                                 "Choose a rank with play.\n"
                                 "Available ranks: 6 7 8 9 10 J D K."
@@ -473,7 +488,7 @@ class Game:
                         (
                             "private",
                             player.username,
-                            (
+                            _(
                                 "Declared rank: {}.\n"
                                 "Choose believe or not."
                             ),
@@ -493,7 +508,7 @@ class Game:
             events.append(
                 (
                     "broadcast",
-                    (
+                    _(
                         "Player #{} {} has no cards and "
                         "finished the game. Place: {}."
                     ),
@@ -512,36 +527,36 @@ class Game:
     def play(self, args: str, username: str,) -> tuple[object, list[object]]:
         """Place selected cards and start a new round."""
         if not self.started:
-            return "Game has not started.", []
+            return _("Game has not started."), []
 
         current_username = self.current_player()
 
         if current_username != username:
-            return "It is not your turn.", []
+            return _("It is not your turn."), []
 
         current_player = self.players[current_username]
 
         if self.pile:
             return (
-                "The pile is not empty. Use believe or not.",
+                _("The pile is not empty. Use believe or not."),
                 [],
             )
 
         try:
             data = shlex.split(args)
         except ValueError:
-            return "Invalid command format.", []
+            return _("Invalid command format."), []
 
         if not data:
-            return "Specify a rank and card numbers.", []
+            return _("Specify a rank and card numbers."), []
 
         declared_rank = data[0]
 
         if declared_rank == "A":
-            return "Aces cannot be declared.", []
+            return _("Aces cannot be declared."), []
 
         if declared_rank not in DECLARABLE_RANKS:
-            return "Invalid declared rank.", []
+            return _("Invalid declared rank."), []
 
         try:
             indexes = [
@@ -549,7 +564,7 @@ class Game:
                 for value in data[1:]
             ]
         except ValueError:
-            return "Card numbers must be integers.", []
+            return _("Card numbers must be integers."), []
 
         try:
             cards = current_player.remove_cards(indexes)
@@ -569,11 +584,17 @@ class Game:
 
         cards_number = len(cards)
 
+        singular, plural = ngettext(
+            "Player #{} {} placed {} card of rank {}.",
+            "Player #{} {} placed {} cards of rank {}.",
+            cards_number,
+        )
+
         events = [
             (
                 "broadcast_ngettext",
-                "Player #{} {} placed {} card of rank {}.",
-                "Player #{} {} placed {} cards of rank {}.",
+                singular,
+                plural,
                 cards_number,
                 (
                     current_player.number,
@@ -595,20 +616,22 @@ class Game:
         current_username = self.current_player()
 
         if current_username != username:
-            return "It is not your turn.", []
+            return _("It is not your turn."), []
 
         current_player = self.players[current_username]
 
         if not self.pile:
-            return "The pile is empty. Use play.", []
+            return _("The pile is empty. Use play."), []
 
         if self.declared_rank is None:
-            return "There is no declared rank.", []
+            return _("There is no declared rank."), []
 
         if self.pending_winner is not None:
             return (
-                "The previous player placed the last cards. "
-                "You must use not.",
+                _(
+                    "The previous player placed the last cards. "
+                    "You must use not."
+                ),
                 [],
             )
 
@@ -616,7 +639,7 @@ class Game:
             values = shlex.split(args)
             indexes = [int(value) for value in values]
         except ValueError:
-            return "Card numbers must be integers.", []
+            return _("Card numbers must be integers."), []
 
         try:
             cards = current_player.remove_cards(indexes)
@@ -638,17 +661,19 @@ class Game:
 
         cards_number = len(cards)
 
+        singular, plural = ngettext(
+            "Player #{} {} believed and placed "
+            "{} more card of rank {}.",
+            "Player #{} {} believed and placed "
+            "{} more cards of rank {}.",
+            cards_number,
+        )
+
         events = [
             (
                 "broadcast_ngettext",
-                (
-                    "Player #{} {} believed and placed "
-                    "{} more card of rank {}."
-                ),
-                (
-                    "Player #{} {} believed and placed "
-                    "{} more cards of rank {}."
-                ),
+                singular,
+                plural,
                 cards_number,
                 (
                     current_player.number,
@@ -670,26 +695,26 @@ class Game:
         current_username = self.current_player()
 
         if current_username != username:
-            return "It is not your turn.", []
+            return _("It is not your turn."), []
 
         if self.last_move is None:
-            return "There is no previous move.", []
+            return _("There is no previous move."), []
 
         try:
             values = shlex.split(args)
         except ValueError:
-            return "Invalid command format.", []
+            return _("Invalid command format."), []
 
         if len(values) != 1:
-            return "Choose exactly one card.", []
+            return _("Choose exactly one card."), []
 
         try:
             index = int(values[0])
         except ValueError:
-            return "Card number must be an integer.", []
+            return _("Card number must be an integer."), []
 
         if index <= 0 or index > len(self.last_move.cards):
-            return "Card number is out of range.", []
+            return _("Card number is out of range."), []
 
         checked_card = self.last_move.cards[index - 1]
         previous_username = self.last_move.username
@@ -699,7 +724,7 @@ class Game:
         events = [
             (
                 "broadcast",
-                "Checked card #{}: {}.",
+                _("Checked card #{}: {}."),
                 index,
                 str(checked_card),
             )
@@ -711,7 +736,7 @@ class Game:
             events.append(
                 (
                     "broadcast",
-                    "The checked card matches rank {}.",
+                    _("The checked card matches rank {}."),
                     declared_rank,
                 )
             )
@@ -726,7 +751,7 @@ class Game:
                 events.append(
                     (
                         "broadcast",
-                        "Player #{} {} finished the game. Place: {}.",
+                        _("Player #{} {} finished the game. Place: {}."),
                         previous_player.number,
                         previous_player.username,
                         len(self.finish_order),
@@ -741,7 +766,7 @@ class Game:
             events.append(
                 (
                     "broadcast",
-                    "The checked card does not match rank {}.",
+                    _("The checked card does not match rank {}."),
                     declared_rank,
                 )
             )
@@ -749,11 +774,17 @@ class Game:
         taker = self.players[taker_username]
         taker.add_cards(self.pile)
 
+        singular, plural = ngettext(
+            "Player #{} {} takes {} card.",
+            "Player #{} {} takes {} cards.",
+            pile_size,
+        )
+
         events.append(
             (
                 "broadcast_ngettext",
-                "Player #{} {} takes {} card.",
-                "Player #{} {} takes {} cards.",
+                singular,
+                plural,
                 pile_size,
                 (
                     taker.number,
@@ -781,7 +812,7 @@ class Game:
 
     def rules(self) -> tuple[object, list[object]]:
         """Return the game rules."""
-        text = (
+        text = _(
             "GAME RULES\n\n"
             "1. The game has from 2 to 4 players.\n"
             "2. Players have 10 seconds to accept an invitation.\n"
@@ -807,7 +838,7 @@ class Game:
         try:
             data = shlex.split(command)
         except ValueError:
-            return "Invalid command format.", []
+            return _("Invalid command format."), []
 
         if not data:
             return "", []
@@ -817,7 +848,7 @@ class Game:
 
         if command_name == "rules":
             if args:
-                return "The rules command takes no arguments.", []
+                return _("The rules command takes no arguments."), []
 
             return self.rules()
 
@@ -830,4 +861,4 @@ class Game:
         if command_name == "not":
             return self.not_believe(args, username)
 
-        return "Invalid command.", []
+        return _("Invalid command."), []
