@@ -5,6 +5,7 @@ import multiprocessing
 import socket
 import time
 import unittest
+from unittest import mock
 
 from believe.server import __main__ as server_main
 
@@ -20,6 +21,7 @@ class FakeWriter:
     def __init__(self) -> None:
         """Create an empty fake writer."""
         self.data = bytearray()
+        self.closed = False
 
     def write(self, data: bytes) -> None:
         """Store written bytes."""
@@ -27,6 +29,14 @@ class FakeWriter:
 
     async def drain(self) -> None:
         """Pretend that buffered data was sent."""
+        return
+
+    def close(self) -> None:
+        """Mark the writer as closed."""
+        self.closed = True
+
+    async def wait_closed(self) -> None:
+        """Wait for the fake writer to close."""
         return
 
     def text(self) -> str:
@@ -442,6 +452,144 @@ class ServerUnitTest(unittest.IsolatedAsyncioTestCase):
             "Player ira disconnected. The game has been stopped.\n",
             self.tanya_writer.text(),
         )
+
+    async def test_validate_username_errors(self) -> None:
+        """Check every username validation error."""
+        self.assertEqual(
+            self.server.validate_username(""),
+            "ERROR bad or busy username",
+        )
+        self.server.clients["taken"] = FakeWriter()
+        self.assertEqual(
+            self.server.validate_username("taken"),
+            "ERROR bad or busy username",
+        )
+        self.server.clients.update({
+            "anna": FakeWriter(),
+            "maria": FakeWriter(),
+        })
+        self.assertEqual(
+            self.server.validate_username("extra"),
+            "ERROR server is full",
+        )
+        self.server.clients.clear()
+        self.server.game.started = True
+        self.assertEqual(
+            self.server.validate_username("extra"),
+            "ERROR game already started",
+        )
+
+    async def test_plural_format_argument_shapes(self) -> None:
+        """Check list and scalar plural formatting arguments."""
+        self.assertEqual(
+            self.server.format_plural_message(
+                "ira", "{} card", "{} cards", 2, [2]
+            ),
+            "2 cards",
+        )
+        self.assertEqual(
+            self.server.format_plural_message(
+                "ira", "{} card", "{} cards", 2, 2
+            ),
+            "2 cards",
+        )
+
+    async def test_invitation_workflow_and_error_branches(self) -> None:
+        """Check invitation creation, acceptance, expiry, and start."""
+        for username in ("anna", "maria", "extra"):
+            self.server.clients[username] = FakeWriter()
+            self.server.locales[username] = "en"
+
+        await self.server.start_invitation("ira")
+        await self.server.start_invitation("tanya")
+        await self.server.accept_invitation("ira")
+        await self.server.accept_invitation("tanya")
+        await self.server.accept_invitation("tanya")
+        await self.server.accept_invitation("anna")
+        await self.server.accept_invitation("maria")
+
+        self.assertEqual(
+            self.server.game.start_calls,
+            [["ira", "tanya", "anna", "maria"]],
+        )
+        self.assertFalse(self.server.invitation_active())
+
+        await self.server.accept_invitation("extra")
+
+        loop = asyncio.get_running_loop()
+        self.server.invitation_owner = "ira"
+        self.server.accepted_players = ["ira"]
+        self.server.invitation_deadline = loop.time() - 1
+        await self.server.accept_invitation("extra")
+
+        self.server.accepted_players = ["ira", "tanya", "anna", "maria"]
+        self.server.invitation_deadline = loop.time() + 1
+        await self.server.accept_invitation("extra")
+
+        self.server.game.started = True
+        self.server.reset_invitation()
+        await self.server.start_invitation("ira")
+
+    async def test_wait_for_players_and_command_routing(self) -> None:
+        """Check invitation timeout and all command routing branches."""
+        self.server.invitation_timeout = 0
+        self.server.invitation_owner = "ira"
+        self.server.accepted_players = ["ira"]
+        await self.server.wait_for_players()
+
+        reader = asyncio.StreamReader()
+        reader.feed_data(
+            b"\nstart\nyes\nlocale ru\nrules\nunknown\nquit\n"
+        )
+        reader.feed_eof()
+
+        with mock.patch.object(
+            self.server,
+            "start_invitation",
+            new=mock.AsyncMock(),
+        ) as start, mock.patch.object(
+            self.server,
+            "accept_invitation",
+            new=mock.AsyncMock(),
+        ) as accept, mock.patch.object(
+            self.server,
+            "handle_locale_command",
+            new=mock.AsyncMock(),
+        ) as locale, mock.patch.object(
+            self.server,
+            "handle_game_command",
+            new=mock.AsyncMock(),
+        ) as game_command:
+            await self.server.handle_commands(
+                "ira",
+                reader,
+                self.ira_writer,
+            )
+
+        start.assert_awaited_once_with("ira")
+        accept.assert_awaited_once_with("ira")
+        locale.assert_awaited_once_with("ira", "locale ru")
+        game_command.assert_awaited_once_with("ira", "rules")
+        self.assertIn("Unknown command: unknown", self.ira_writer.text())
+
+    async def test_handle_client_registration_and_cleanup(self) -> None:
+        """Check empty and successful client sessions."""
+        empty_reader = asyncio.StreamReader()
+        empty_reader.feed_eof()
+        empty_writer = FakeWriter()
+        await self.server.handle_client(empty_reader, empty_writer)
+        self.assertIn("ERROR bad or busy username", empty_writer.text())
+        self.assertTrue(empty_writer.closed)
+
+        reader = asyncio.StreamReader()
+        reader.feed_data(b"guest\nquit\n")
+        reader.feed_eof()
+        writer = FakeWriter()
+        await self.server.handle_client(reader, writer)
+
+        self.assertIn("OK\n", writer.text())
+        self.assertNotIn("guest", self.server.clients)
+        self.assertTrue(writer.closed)
 
 
 if __name__ == "__main__":
