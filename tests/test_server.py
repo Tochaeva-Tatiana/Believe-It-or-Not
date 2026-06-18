@@ -409,7 +409,12 @@ class ServerUnitTest(unittest.IsolatedAsyncioTestCase):
         await self.server.handle_locale_command("ira", "locale ru")
 
         self.assertEqual(self.server.locales["ira"], "ru")
-        self.assertIn("Locale changed to ru.\n", self.ira_writer.text())
+        expected = self.server.format_message(
+            "ira",
+            "Locale changed to {}.",
+            "ru",
+        )
+        self.assertIn(f"{expected}\n", self.ira_writer.text())
 
     async def test_unregister_regular_client_does_not_stop_game(self) -> None:
         """Check that non-participant disconnect does not stop a game."""

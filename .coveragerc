@@ -1,0 +1,13 @@
+[run]
+source = believe
+
+[report]
+show_missing = True
+precision = 1
+exclude_lines =
+    pragma: no cover
+    if __name__ == .__main__.:
+
+[html]
+directory = htmlcov
+title = Believe-It-or-Not test coverage
