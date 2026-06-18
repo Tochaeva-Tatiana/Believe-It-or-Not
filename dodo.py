@@ -146,6 +146,21 @@ def task_test() -> dict[str, object]:
     }
 
 
+def task_coverage() -> dict[str, object]:
+    """Run tests and create terminal and HTML coverage reports."""
+    return {
+        "actions": [
+            f"{PYTHON} -m coverage erase",
+            (
+                f"{PYTHON} -m coverage run "
+                "-m unittest discover -s tests"
+            ),
+            f"{PYTHON} -m coverage report -m",
+            f"{PYTHON} -m coverage html",
+        ],
+    }
+
+
 def task_flake8() -> dict[str, object]:
     """Run flake8 style checks."""
     return {

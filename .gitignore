@@ -8,3 +8,7 @@ dist/
 htmlcov/
 doc/_build/
 *.mo
+.coverage
+.coverage.*
+.doit.db
+.doit.db.*
