@@ -19,6 +19,11 @@ LOCALE_NAMES = {
 }
 
 
+def _(message: str) -> str:
+    """Return a message marked for gettext extraction."""
+    return message
+
+
 GAME_COMMANDS = {
     "rules",
     "play",
@@ -234,13 +239,13 @@ class Server:
     async def start_invitation(self, username: str) -> None:
         """Start waiting for players."""
         if self.game_started():
-            await self.send_to(username, "The game has already started.")
+            await self.send_to(username, _("The game has already started."))
             return
 
         if self.invitation_active():
             await self.send_to(
                 username,
-                "Player recruitment is already in progress.",
+                _("Player recruitment is already in progress."),
             )
             return
 
@@ -255,22 +260,24 @@ class Server:
 
         await self.send_to(
             username,
-            "Invitation sent. Waiting for players: 10 seconds.",
+            _("Invitation sent. Waiting for players: 10 seconds."),
         )
 
         for player_name in list(self.clients):
             if player_name != username:
                 await self.send_to(
                     player_name,
-                    "Player {} invites you to join the game. "
-                    "Type yes within 10 seconds.",
+                    _(
+                        "Player {} invites you to join the game. "
+                        "Type yes within 10 seconds."
+                    ),
                     username,
                 )
 
     async def accept_invitation(self, username: str) -> None:
         """Accept active game invitation."""
         if not self.invitation_active():
-            await self.send_to(username, "There is no active invitation.")
+            await self.send_to(username, _("There is no active invitation."))
             return
 
         if self.invitation_deadline is not None:
@@ -279,28 +286,28 @@ class Server:
             if loop.time() > self.invitation_deadline:
                 await self.send_to(
                     username,
-                    "There is no active invitation.",
+                    _("There is no active invitation."),
                 )
                 return
 
         if username == self.invitation_owner:
             await self.send_to(
                 username,
-                "You are already the creator of this game.",
+                _("You are already the creator of this game."),
             )
             return
 
         if username in self.accepted_players:
             await self.send_to(
                 username,
-                "You have already joined this game.",
+                _("You have already joined this game."),
             )
             return
 
         if len(self.accepted_players) >= MAX_PLAYERS:
             await self.send_to(
                 username,
-                "Four players are already participating in the game.",
+                _("Four players are already participating in the game."),
             )
             return
 
@@ -309,7 +316,7 @@ class Server:
 
         await self.send_to(
             username,
-            "You joined the game as player #{}.",
+            _("You joined the game as player #{}."),
             player_number,
         )
 
@@ -317,7 +324,7 @@ class Server:
             if player_name != username:
                 await self.send_to(
                     player_name,
-                    "Player #{} {} joined the game.",
+                    _("Player #{} {} joined the game."),
                     player_number,
                     username,
                 )
@@ -327,8 +334,10 @@ class Server:
                 self.invitation_task.cancel()
 
             await self.broadcast_all(
-                "The maximum number of players has been reached. "
-                "The game starts early.",
+                _(
+                    "The maximum number of players has been reached. "
+                    "The game starts early."
+                ),
             )
             await self.begin_game()
 
@@ -345,11 +354,11 @@ class Server:
             if owner is not None:
                 await self.send_to(
                     owner,
-                    "Nobody joined. The game did not start.",
+                    _("Nobody joined. The game did not start."),
                 )
 
             await self.broadcast_all(
-                "Player recruitment ended without starting the game.",
+                _("Player recruitment ended without starting the game."),
             )
             self.reset_invitation()
             return
@@ -375,15 +384,17 @@ class Server:
 
         if self.game is None or not hasattr(self.game, "start"):
             await self.broadcast_all(
-                "Player recruitment ended. "
-                "The game model is not ready yet.",
+                _(
+                    "Player recruitment ended. "
+                    "The game model is not ready yet."
+                ),
             )
             return
 
         events = self.game.start(usernames)
 
         await self.broadcast_game(
-            "The game starts. Players: {}",
+            _("The game starts. Players: {}"),
             ", ".join(usernames),
         )
 
@@ -461,7 +472,7 @@ class Server:
         if len(parts) != 2:
             await self.send_to(
                 username,
-                "Usage: locale en|ru|ru-2",
+                _("Usage: locale en|ru|ru-2"),
             )
             return
 
@@ -470,13 +481,13 @@ class Server:
         if locale not in LOCALE_NAMES:
             await self.send_to(
                 username,
-                "Unknown locale. Available locales: {}",
+                _("Unknown locale. Available locales: {}"),
                 ", ".join(LOCALE_NAMES),
             )
             return
 
         self.locales[username] = locale
-        await self.send_to(username, "Locale changed to {}.", locale)
+        await self.send_to(username, _("Locale changed to {}."), locale)
 
     async def handle_game_command(
         self,
@@ -487,14 +498,14 @@ class Server:
         if self.game is None or not hasattr(self.game, "process"):
             await self.send_to(
                 username,
-                "The game model is not ready yet.",
+                _("The game model is not ready yet."),
             )
             return
 
         command_name = command.split(maxsplit=1)[0]
 
         if command_name != "rules" and not self.game_started():
-            await self.send_to(username, "The game has not started yet.")
+            await self.send_to(username, _("The game has not started yet."))
             return
 
         player_order = getattr(self.game, "player_order", [])
@@ -506,7 +517,7 @@ class Server:
         ):
             await self.send_to(
                 username,
-                "You are not participating in the current game.",
+                _("You are not participating in the current game."),
             )
             return
 
@@ -538,7 +549,7 @@ class Server:
 
             self.reset_invitation()
             await self.broadcast_all(
-                "The game creator left. Player recruitment was cancelled.",
+                _("The game creator left. Player recruitment was cancelled."),
             )
             return
 
@@ -551,7 +562,7 @@ class Server:
 
         if was_player:
             await self.broadcast_game(
-                "Player {} disconnected. The game has been stopped.",
+                _("Player {} disconnected. The game has been stopped."),
                 username,
             )
 
@@ -643,7 +654,7 @@ class Server:
 
             await self.send_to(
                 username,
-                "Unknown command: {}",
+                _("Unknown command: {}"),
                 command,
             )
 
