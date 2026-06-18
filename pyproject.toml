@@ -12,6 +12,11 @@ requires-python = ">=3.12"
 dependencies = []
 
 
+[project.scripts]
+believe-client = "believe.client.__main__:main"
+believe-server = "believe.server.__main__:serve"
+
+
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["believe*"]
