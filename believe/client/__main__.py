@@ -34,6 +34,10 @@ class CmdBelieve(cmd.Cmd):
         self.username = username
         self.loop = loop
 
+    def emptyline(self) -> None:
+        """Ignore an empty command line."""
+        return
+
     async def send_command(self, command: str) -> None:
         """Send one command line to the server asynchronously."""
         if self.writer is None:
@@ -94,7 +98,7 @@ class CmdBelieve(cmd.Cmd):
             return
 
         if not arguments:
-            print("Usage: play <rank> [card numbers]")
+            print("Usage: play <rank> <card numbers>")
             return
 
         rank = arguments[0]
@@ -104,14 +108,7 @@ class CmdBelieve(cmd.Cmd):
             return
 
         if len(arguments) == 1:
-            indexes = input("Enter card numbers separated by spaces: ")
-            indexes = indexes.strip()
-
-            if not indexes:
-                print("Usage: play <rank> <card numbers>")
-                return
-
-            self.request(f"play {rank} {indexes}")
+            print("Usage: play <rank> <card numbers>")
             return
 
         self.request("play " + " ".join(arguments))
@@ -125,14 +122,7 @@ class CmdBelieve(cmd.Cmd):
             return
 
         if not arguments:
-            indexes = input("Enter card numbers separated by spaces: ")
-            indexes = indexes.strip()
-
-            if not indexes:
-                print("Usage: believe <card numbers>")
-                return
-
-            self.request(f"believe {indexes}")
+            print("Usage: believe <card numbers>")
             return
 
         self.request("believe " + " ".join(arguments))
@@ -145,18 +135,11 @@ class CmdBelieve(cmd.Cmd):
             print(error)
             return
 
-        if not arguments:
-            index = input("Choose one card number to check: ")
-            index = index.strip()
-
-            if not index:
-                print("Usage: not <card number>")
-                return
-
-            self.request(f"not {index}")
+        if len(arguments) != 1:
+            print("Usage: not <card number>")
             return
 
-        self.request("not " + " ".join(arguments))
+        self.request("not " + arguments[0])
 
     def do_locale(self, arg: str) -> None:
         """Change interface locale."""
@@ -237,10 +220,7 @@ class CmdBelieve(cmd.Cmd):
         return True
 
 
-async def receive_messages(
-    reader: StreamReader,
-    shell: CmdBelieve,
-) -> None:
+async def receive_messages(reader: StreamReader) -> None:
     """Print messages received from the server immediately."""
     while True:
         data = await reader.readline()
@@ -255,8 +235,7 @@ async def receive_messages(
         message = data.decode().rstrip("\r\n")
 
         print(
-            f"\n{message}\n{shell.prompt}",
-            end="",
+            f"\n{message}",
             flush=True,
         )
 
@@ -311,7 +290,9 @@ async def amain() -> None:
         username=username,
         loop=loop,
     )
-    receiver_task = asyncio.create_task(receive_messages(reader, shell))
+    receiver_task = asyncio.create_task(
+        receive_messages(reader),
+    )
 
     try:
         await asyncio.to_thread(shell.cmdloop)
