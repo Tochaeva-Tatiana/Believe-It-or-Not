@@ -2,6 +2,7 @@
 
 import asyncio
 import cmd
+import gettext
 import shlex
 import sys
 import webbrowser
@@ -15,6 +16,39 @@ from believe.common import HOST
 from believe.common import PORT
 
 
+LOCALE_NAMES = {
+    "en": None,
+    "ru": "ru_RU",
+    "ru-2": "ru_BY",
+}
+
+
+def _(message: str) -> str:
+    """Return a message marked for gettext extraction."""
+    return message
+
+
+def client_translation(locale: str) -> gettext.NullTranslations:
+    """Return translation object for client messages."""
+    language = LOCALE_NAMES.get(locale)
+
+    if language is None:
+        return gettext.NullTranslations()
+
+    localedir = (
+        Path(__file__).resolve().parents[1]
+        / "server"
+        / "po"
+    )
+
+    return gettext.translation(
+        "believe_server",
+        localedir=localedir,
+        languages=[language],
+        fallback=True,
+    )
+
+
 class CmdBelieve(cmd.Cmd):
     """Believe-It-or-Not command line."""
 
@@ -26,6 +60,7 @@ class CmdBelieve(cmd.Cmd):
         writer: StreamWriter | None = None,
         username: str = "",
         loop: asyncio.AbstractEventLoop | None = None,
+        locale: str = "en",
     ) -> None:
         """Create command shell."""
         super().__init__()
@@ -33,6 +68,11 @@ class CmdBelieve(cmd.Cmd):
         self.writer = writer
         self.username = username
         self.loop = loop
+        self.locale = locale
+
+    def translate(self, message: str) -> str:
+        """Translate a client-side message."""
+        return client_translation(self.locale).gettext(message)
 
     def emptyline(self) -> None:
         """Ignore an empty command line."""
@@ -41,7 +81,7 @@ class CmdBelieve(cmd.Cmd):
     async def send_command(self, command: str) -> None:
         """Send one command line to the server asynchronously."""
         if self.writer is None:
-            print("Client is not connected.")
+            print(self.translate(_("Client is not connected.")))
             return
 
         self.writer.write(f"{command}\n".encode())
@@ -50,7 +90,7 @@ class CmdBelieve(cmd.Cmd):
     def request(self, command: str) -> None:
         """Send one command line to the server."""
         if self.writer is None or self.loop is None:
-            print("Client is not connected.")
+            print(self.translate(_("Client is not connected.")))
             return
 
         future = asyncio.run_coroutine_threadsafe(
@@ -61,14 +101,14 @@ class CmdBelieve(cmd.Cmd):
         try:
             future.result(timeout=1)
         except FutureTimeoutError:
-            print("Server did not accept command in time.")
+            print(self.translate(_("Server did not accept command in time.")))
         except (ConnectionError, RuntimeError, OSError):
-            print("Connection to server is lost.")
+            print(self.translate(_("Connection to server is lost.")))
 
     def do_start(self, arg: str) -> None:
         """Start invitation for a new game."""
         if arg.strip():
-            print("Usage: start")
+            print(self.translate(_("Usage: start")))
             return
 
         self.request("start")
@@ -76,7 +116,7 @@ class CmdBelieve(cmd.Cmd):
     def do_yes(self, arg: str) -> None:
         """Accept game invitation."""
         if arg.strip():
-            print("Usage: yes")
+            print(self.translate(_("Usage: yes")))
             return
 
         self.request("yes")
@@ -84,7 +124,7 @@ class CmdBelieve(cmd.Cmd):
     def do_rules(self, arg: str) -> None:
         """Ask server to show game rules."""
         if arg.strip():
-            print("Usage: rules")
+            print(self.translate(_("Usage: rules")))
             return
 
         self.request("rules")
@@ -98,17 +138,20 @@ class CmdBelieve(cmd.Cmd):
             return
 
         if not arguments:
-            print("Usage: play <rank> <card numbers>")
+            print(self.translate(_("Usage: play <rank> <card numbers>")))
             return
 
         rank = arguments[0]
 
         if rank not in DECLARABLE_RANKS:
-            print("Rank must be one of: " + " ".join(DECLARABLE_RANKS))
+            print(
+                self.translate(_("Rank must be one of: "))
+                + " ".join(DECLARABLE_RANKS)
+            )
             return
 
         if len(arguments) == 1:
-            print("Usage: play <rank> <card numbers>")
+            print(self.translate(_("Usage: play <rank> <card numbers>")))
             return
 
         self.request("play " + " ".join(arguments))
@@ -122,7 +165,7 @@ class CmdBelieve(cmd.Cmd):
             return
 
         if not arguments:
-            print("Usage: believe <card numbers>")
+            print(self.translate(_("Usage: believe <card numbers>")))
             return
 
         self.request("believe " + " ".join(arguments))
@@ -136,7 +179,7 @@ class CmdBelieve(cmd.Cmd):
             return
 
         if len(arguments) != 1:
-            print("Usage: not <card number>")
+            print(self.translate(_("Usage: not <card number>")))
             return
 
         self.request("not " + arguments[0])
@@ -146,15 +189,16 @@ class CmdBelieve(cmd.Cmd):
         locale = arg.strip()
 
         if locale not in ("en", "ru", "ru-2"):
-            print("Usage: locale <en|ru|ru-2>")
+            print(self.translate(_("Usage: locale <en|ru|ru-2>")))
             return
 
+        self.locale = locale
         self.request(f"locale {locale}")
 
     def do_documentation(self, arg: str) -> None:
         """Open local project documentation."""
         if arg.strip():
-            print("Usage: documentation")
+            print(self.translate(_("Usage: documentation")))
             return
 
         index_path = (
@@ -164,7 +208,7 @@ class CmdBelieve(cmd.Cmd):
         )
 
         if not index_path.exists():
-            print("Documentation is not built yet.")
+            print(self.translate(_("Documentation is not built yet.")))
             return
 
         webbrowser.open(index_path.as_uri())
@@ -207,7 +251,7 @@ class CmdBelieve(cmd.Cmd):
     def do_quit(self, arg: str) -> bool:
         """Close the client session."""
         if arg.strip():
-            print("Usage: quit")
+            print(self.translate(_("Usage: quit")))
             return False
 
         self.request("quit")
@@ -220,14 +264,17 @@ class CmdBelieve(cmd.Cmd):
         return True
 
 
-async def receive_messages(reader: StreamReader) -> None:
+async def receive_messages(
+    reader: StreamReader,
+    shell: CmdBelieve,
+) -> None:
     """Print messages received from the server immediately."""
     while True:
         data = await reader.readline()
 
         if not data:
             print(
-                "\nConnection closed by server.",
+                "\n" + shell.translate(_("Connection closed by server.")),
                 flush=True,
             )
             return
@@ -245,7 +292,7 @@ async def connect(username: str) -> tuple[StreamReader, StreamWriter] | None:
     try:
         reader, writer = await asyncio.open_connection(HOST, PORT)
     except OSError as error:
-        print(f"Cannot connect to server: {error}")
+        print("{} {}".format(_("Cannot connect to server:"), error))
         return None
 
     writer.write(f"{username}\n".encode())
@@ -254,7 +301,7 @@ async def connect(username: str) -> tuple[StreamReader, StreamWriter] | None:
     data = await reader.readline()
 
     if not data:
-        print("Server closed connection.")
+        print(_("Server closed connection."))
         writer.close()
         await writer.wait_closed()
         return None
@@ -273,7 +320,7 @@ async def connect(username: str) -> tuple[StreamReader, StreamWriter] | None:
 async def amain() -> None:
     """Run connected client command shell."""
     if len(sys.argv) != 2 or not sys.argv[1]:
-        print("Usage: python3 -m believe.client <username>")
+        print(_("Usage: python3 -m believe.client <username>"))
         return
 
     username = sys.argv[1]
@@ -291,7 +338,10 @@ async def amain() -> None:
         loop=loop,
     )
     receiver_task = asyncio.create_task(
-        receive_messages(reader),
+        receive_messages(
+            reader,
+            shell,
+        ),
     )
 
     try:

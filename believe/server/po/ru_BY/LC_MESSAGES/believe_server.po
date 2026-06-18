@@ -1,0 +1,250 @@
+# Alternative Russian translations for Believe-It-or-Not.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: believe 0.1.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-06-18 00:00+0000\n"
+"PO-Revision-Date: 2026-06-18 00:00+0000\n"
+"Last-Translator: Irina\n"
+"Language-Team: Russian (Belarus)\n"
+"Language: ru_BY\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : "
+"n%10>=2 && n%10<=4 && (n%100<12 || n%100>14) ? 1 : 2);\n"
+
+msgid "Client is not connected."
+msgstr "КЛИЕНТ НЕ ПОДКЛЮЧЁН."
+
+msgid "Server did not accept command in time."
+msgstr "СЕРВЕР НЕ ПРИНЯЛ КОМАНДУ ВОВРЕМЯ."
+
+msgid "Connection to server is lost."
+msgstr "СОЕДИНЕНИЕ С СЕРВЕРОМ ПОТЕРЯНО."
+
+msgid "Usage: start"
+msgstr "ИСПОЛЬЗОВАНИЕ: start"
+
+msgid "Usage: yes"
+msgstr "ИСПОЛЬЗОВАНИЕ: yes"
+
+msgid "Usage: rules"
+msgstr "ИСПОЛЬЗОВАНИЕ: rules"
+
+msgid "Usage: play <rank> <card numbers>"
+msgstr "ИСПОЛЬЗОВАНИЕ: play <НОМИНАЛ> <НОМЕРА КАРТ>"
+
+msgid "Rank must be one of: "
+msgstr "НОМИНАЛ ДОЛЖЕН БЫТЬ ОДНИМ ИЗ: "
+
+msgid "Usage: believe <card numbers>"
+msgstr "ИСПОЛЬЗОВАНИЕ: believe <НОМЕРА КАРТ>"
+
+msgid "Usage: not <card number>"
+msgstr "ИСПОЛЬЗОВАНИЕ: not <НОМЕР КАРТЫ>"
+
+msgid "Usage: locale <en|ru|ru-2>"
+msgstr "ИСПОЛЬЗОВАНИЕ: locale <en|ru|ru-2>"
+
+msgid "Usage: documentation"
+msgstr "ИСПОЛЬЗОВАНИЕ: documentation"
+
+msgid "Documentation is not built yet."
+msgstr "ДОКУМЕНТАЦИЯ ЕЩЁ НЕ СОБРАНА."
+
+msgid "Usage: quit"
+msgstr "ИСПОЛЬЗОВАНИЕ: quit"
+
+msgid "Connection closed by server."
+msgstr "СОЕДИНЕНИЕ ЗАКРЫТО СЕРВЕРОМ."
+
+msgid "Cannot connect to server:"
+msgstr "НЕ УДАЛОСЬ ПОДКЛЮЧИТЬСЯ К СЕРВЕРУ:"
+
+msgid "Server closed connection."
+msgstr "СЕРВЕР ЗАКРЫЛ СОЕДИНЕНИЕ."
+
+msgid "Usage: python3 -m believe.client <username>"
+msgstr "ИСПОЛЬЗОВАНИЕ: python3 -m believe.client <ИМЯ>"
+
+msgid "The game has already started."
+msgstr "ИГРА УЖЕ НАЧАЛАСЬ."
+
+msgid "Player recruitment is already in progress."
+msgstr "НАБОР ИГРОКОВ УЖЕ ИДЁТ."
+
+msgid "Invitation sent. Waiting for players: 10 seconds."
+msgstr "ПРИГЛАШЕНИЕ ОТПРАВЛЕНО. ОЖИДАНИЕ ИГРОКОВ: 10 СЕКУНД."
+
+msgid "Player {} invites you to join the game. Type yes within 10 seconds."
+msgstr "ИГРОК {} ПРИГЛАШАЕТ ВАС В ИГРУ. ВВЕДИТЕ yes В ТЕЧЕНИЕ 10 СЕКУНД."
+
+msgid "There is no active invitation."
+msgstr "СЕЙЧАС НЕТ АКТИВНОГО ПРИГЛАШЕНИЯ."
+
+msgid "You are already the creator of this game."
+msgstr "ВЫ УЖЕ ЯВЛЯЕТЕСЬ СОЗДАТЕЛЕМ ЭТОЙ ИГРЫ."
+
+msgid "You have already joined this game."
+msgstr "ВЫ УЖЕ ПРИСОЕДИНИЛИСЬ К ЭТОЙ ИГРЕ."
+
+msgid "Four players are already participating in the game."
+msgstr "В ИГРЕ УЖЕ УЧАСТВУЮТ ЧЕТЫРЕ ИГРОКА."
+
+msgid "You joined the game as player #{}."
+msgstr "ВЫ ПРИСОЕДИНИЛИСЬ К ИГРЕ КАК ИГРОК №{}."
+
+msgid "Player #{} {} joined the game."
+msgstr "ИГРОК №{} {} ПРИСОЕДИНИЛСЯ К ИГРЕ."
+
+msgid "The maximum number of players has been reached. The game starts early."
+msgstr "НАБРАНО МАКСИМАЛЬНОЕ КОЛИЧЕСТВО ИГРОКОВ. ИГРА НАЧИНАЕТСЯ ДОСРОЧНО."
+
+msgid "Nobody joined. The game did not start."
+msgstr "НИКТО НЕ ПРИСОЕДИНИЛСЯ. ИГРА НЕ НАЧАЛАСЬ."
+
+msgid "Player recruitment ended without starting the game."
+msgstr "НАБОР ИГРОКОВ ЗАВЕРШЁН БЕЗ НАЧАЛА ИГРЫ."
+
+msgid "Player recruitment ended. The game model is not ready yet."
+msgstr "НАБОР ИГРОКОВ ЗАВЕРШЁН. ИГРОВАЯ МОДЕЛЬ ЕЩЁ НЕ ГОТОВА."
+
+msgid "The game starts. Players: {}"
+msgstr "ИГРА НАЧИНАЕТСЯ. УЧАСТНИКИ: {}"
+
+msgid "Usage: locale en|ru|ru-2"
+msgstr "ИСПОЛЬЗОВАНИЕ: locale en|ru|ru-2"
+
+msgid "Unknown locale. Available locales: {}"
+msgstr "НЕИЗВЕСТНАЯ ЛОКАЛЬ. ДОСТУПНЫЕ ЛОКАЛИ: {}"
+
+msgid "Locale changed to {}."
+msgstr "ЛОКАЛЬ ИЗМЕНЕНА НА {}."
+
+msgid "The game model is not ready yet."
+msgstr "ИГРОВАЯ МОДЕЛЬ ЕЩЁ НЕ ГОТОВА."
+
+msgid "The game has not started yet."
+msgstr "ИГРА ЕЩЁ НЕ НАЧАЛАСЬ."
+
+msgid "You are not participating in the current game."
+msgstr "ВЫ НЕ УЧАСТВУЕТЕ В ТЕКУЩЕЙ ИГРЕ."
+
+msgid "The game creator left. Player recruitment was cancelled."
+msgstr "СОЗДАТЕЛЬ ИГРЫ ВЫШЕЛ. НАБОР ИГРОКОВ ОТМЕНЁН."
+
+msgid "Player {} disconnected. The game has been stopped."
+msgstr "ИГРОК {} ОТКЛЮЧИЛСЯ. ИГРА ОСТАНОВЛЕНА."
+
+msgid "Unknown command: {}"
+msgstr "НЕИЗВЕСТНАЯ КОМАНДА: {}"
+
+msgid "It is now player #{} {}'s turn."
+msgstr "СЕЙЧАС ХОД ИГРОКА №{} {}."
+
+msgid "It is your turn.\n\nYour cards:\n{}"
+msgstr "ВАШ ХОД.\n\nВАШИ КАРТЫ:\n{}"
+
+msgid "You start a new round.\nChoose a rank with play.\nAvailable ranks: 6 7 8 9 10 J D K."
+msgstr ""
+"ВЫ НАЧИНАЕТЕ НОВЫЙ КОН.\n"
+"ВЫБЕРИТЕ НОМИНАЛ КОМАНДОЙ play.\n"
+"ДОСТУПНЫЕ НОМИНАЛЫ: 6 7 8 9 10 J D K."
+
+msgid "Declared rank: {}.\nChoose believe or not."
+msgstr "ОБЪЯВЛЕННЫЙ НОМИНАЛ: {}.\nВЫБЕРИТЕ believe ИЛИ not."
+
+msgid "It is not your turn."
+msgstr "СЕЙЧАС НЕ ВАШ ХОД."
+
+msgid "The pile is not empty. Use believe or not."
+msgstr "СТОПКА НЕ ПУСТА. ИСПОЛЬЗУЙТЕ believe ИЛИ not."
+
+msgid "Invalid command format."
+msgstr "НЕВЕРНЫЙ ФОРМАТ КОМАНДЫ."
+
+msgid "Specify a rank and card numbers."
+msgstr "УКАЖИТЕ НОМИНАЛ И НОМЕРА КАРТ."
+
+msgid "Aces cannot be declared."
+msgstr "ТУЗЫ НЕЛЬЗЯ ОБЪЯВЛЯТЬ."
+
+msgid "Invalid declared rank."
+msgstr "НЕДОПУСТИМЫЙ ОБЪЯВЛЕННЫЙ НОМИНАЛ."
+
+msgid "Card numbers must be integers."
+msgstr "НОМЕРА КАРТ ДОЛЖНЫ БЫТЬ ЦЕЛЫМИ ЧИСЛАМИ."
+
+msgid "No cards selected"
+msgstr "КАРТЫ НЕ ВЫБРАНЫ"
+
+msgid "Card numbers must be positive"
+msgstr "НОМЕРА КАРТ ДОЛЖНЫ БЫТЬ ПОЛОЖИТЕЛЬНЫМИ"
+
+msgid "Card numbers must be unique"
+msgstr "НОМЕРА КАРТ ДОЛЖНЫ БЫТЬ УНИКАЛЬНЫМИ"
+
+msgid "Card number is out of range"
+msgstr "НОМЕР КАРТЫ ВНЕ ДИАПАЗОНА"
+
+msgid "Card number is out of range."
+msgstr "НОМЕР КАРТЫ ВНЕ ДИАПАЗОНА."
+
+msgid "The pile is empty. Use play."
+msgstr "СТОПКА ПУСТА. ИСПОЛЬЗУЙТЕ play."
+
+msgid "There is no declared rank."
+msgstr "НЕТ ОБЪЯВЛЕННОГО НОМИНАЛА."
+
+msgid "The previous player placed the last cards. You must use not."
+msgstr "ПРЕДЫДУЩИЙ ИГРОК ВЫЛОЖИЛ ПОСЛЕДНИЕ КАРТЫ. ВЫ ДОЛЖНЫ ИСПОЛЬЗОВАТЬ not."
+
+msgid "There is no previous move."
+msgstr "ПРЕДЫДУЩЕГО ХОДА НЕТ."
+
+msgid "Choose exactly one card."
+msgstr "ВЫБЕРИТЕ РОВНО ОДНУ КАРТУ."
+
+msgid "Card number must be an integer."
+msgstr "НОМЕР КАРТЫ ДОЛЖЕН БЫТЬ ЦЕЛЫМ ЧИСЛОМ."
+
+msgid "Checked card #{}: {}."
+msgstr "ПРОВЕРЕННАЯ КАРТА №{}: {}."
+
+msgid "The checked card matches rank {}."
+msgstr "ПРОВЕРЕННАЯ КАРТА СОВПАДАЕТ С НОМИНАЛОМ {}."
+
+msgid "The checked card does not match rank {}."
+msgstr "ПРОВЕРЕННАЯ КАРТА НЕ СОВПАДАЕТ С НОМИНАЛОМ {}."
+
+msgid "The rules command takes no arguments."
+msgstr "КОМАНДА rules НЕ ПРИНИМАЕТ АРГУМЕНТЫ."
+
+msgid "Invalid command."
+msgstr "НЕДОПУСТИМАЯ КОМАНДА."
+
+msgid "{} card"
+msgid_plural "{} cards"
+msgstr[0] "{} КАРТА"
+msgstr[1] "{} КАРТЫ"
+msgstr[2] "{} КАРТ"
+
+msgid "Player #{} {} placed {} card of rank {}."
+msgid_plural "Player #{} {} placed {} cards of rank {}."
+msgstr[0] "ИГРОК №{} {} ПОЛОЖИЛ {} КАРТУ НОМИНАЛА {}."
+msgstr[1] "ИГРОК №{} {} ПОЛОЖИЛ {} КАРТЫ НОМИНАЛА {}."
+msgstr[2] "ИГРОК №{} {} ПОЛОЖИЛ {} КАРТ НОМИНАЛА {}."
+
+msgid "Player #{} {} believed and placed {} more card of rank {}."
+msgid_plural "Player #{} {} believed and placed {} more cards of rank {}."
+msgstr[0] "ИГРОК №{} {} ПОВЕРИЛ И ПОЛОЖИЛ ЕЩЁ {} КАРТУ НОМИНАЛА {}."
+msgstr[1] "ИГРОК №{} {} ПОВЕРИЛ И ПОЛОЖИЛ ЕЩЁ {} КАРТЫ НОМИНАЛА {}."
+msgstr[2] "ИГРОК №{} {} ПОВЕРИЛ И ПОЛОЖИЛ ЕЩЁ {} КАРТ НОМИНАЛА {}."
+
+msgid "Player #{} {} takes {} card."
+msgid_plural "Player #{} {} takes {} cards."
+msgstr[0] "ИГРОК №{} {} ЗАБИРАЕТ {} КАРТУ."
+msgstr[1] "ИГРОК №{} {} ЗАБИРАЕТ {} КАРТЫ."
+msgstr[2] "ИГРОК №{} {} ЗАБИРАЕТ {} КАРТ."
