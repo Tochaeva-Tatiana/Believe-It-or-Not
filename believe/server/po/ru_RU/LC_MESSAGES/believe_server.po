@@ -1,0 +1,296 @@
+# Russian (Russia) translations for Believe-It-or-Not.
+# Copyright (C) 2026 Believe-It-or-Not developers
+# This file is distributed under the same license as the Believe-It-or-Not
+# project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Believe-It-or-Not 0.1.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-06-18 01:31+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: \n"
+"Language: ru_RU\n"
+"Language-Team: ru_RU\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : "
+"n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+msgid "The game has already started."
+msgstr "Игра уже началась."
+
+msgid "Player recruitment is already in progress."
+msgstr "Набор игроков уже идёт."
+
+msgid "Invitation sent. Waiting for players: 10 seconds."
+msgstr "Приглашение отправлено. Ожидание игроков: 10 секунд."
+
+msgid "Player {} invites you to join the game. Type yes within 10 seconds."
+msgstr "Игрок {} приглашает вас в игру. Введите yes в течение 10 секунд."
+
+msgid "There is no active invitation."
+msgstr "Сейчас нет активного приглашения."
+
+msgid "You are already the creator of this game."
+msgstr "Вы уже являетесь создателем этой игры."
+
+msgid "You have already joined this game."
+msgstr "Вы уже присоединились к этой игре."
+
+msgid "Four players are already participating in the game."
+msgstr "В игре уже участвуют четыре игрока."
+
+msgid "You joined the game as player #{}."
+msgstr "Вы присоединились к игре как игрок №{}."
+
+msgid "Player #{} {} joined the game."
+msgstr "Игрок №{} {} присоединился к игре."
+
+msgid "The maximum number of players has been reached. The game starts early."
+msgstr "Набрано максимальное количество игроков. Игра начинается досрочно."
+
+msgid "Nobody joined. The game did not start."
+msgstr "Никто не присоединился. Игра не началась."
+
+msgid "Player recruitment ended without starting the game."
+msgstr "Набор игроков завершён без начала игры."
+
+msgid "Player recruitment ended. The game model is not ready yet."
+msgstr "Набор игроков завершён. Игровая модель ещё не готова."
+
+msgid "The game starts. Players: {}"
+msgstr "Игра начинается. Участники: {}"
+
+msgid "Usage: locale en|ru|ru-2"
+msgstr "Использование: locale en|ru|ru-2"
+
+msgid "Unknown locale. Available locales: {}"
+msgstr "Неизвестная локаль. Доступные локали: {}"
+
+msgid "Locale changed to {}."
+msgstr "Локаль изменена на {}."
+
+msgid "The game model is not ready yet."
+msgstr "Игровая модель ещё не готова."
+
+msgid "The game has not started yet."
+msgstr "Игра ещё не началась."
+
+msgid "You are not participating in the current game."
+msgstr "Вы не участвуете в текущей игре."
+
+msgid "The game creator left. Player recruitment was cancelled."
+msgstr "Создатель игры вышел. Набор игроков отменён."
+
+msgid "Player {} disconnected. The game has been stopped."
+msgstr "Игрок {} отключился. Игра остановлена."
+
+msgid "Unknown command: {}"
+msgstr "Неизвестная команда: {}"
+
+
+msgid "Unknown suit"
+msgstr "Неизвестная масть"
+
+msgid "Unknown rank"
+msgstr "Неизвестный номинал"
+
+msgid "The deck is empty"
+msgstr "Колода пуста"
+
+msgid "The number of players must be between 2 and 4"
+msgstr "Количество игроков должно быть от 2 до 4"
+
+msgid "No cards selected"
+msgstr "Не выбрано ни одной карты"
+
+msgid "Card numbers must be integers"
+msgstr "Номера карт должны быть целыми числами"
+
+msgid "Card numbers must be positive"
+msgstr "Номера карт должны быть положительными"
+
+msgid "Card numbers must be unique"
+msgstr "Номера карт не должны повторяться"
+
+msgid "Card number is out of range"
+msgstr "Номер карты вне допустимого диапазона"
+
+msgid "Player names must be unique"
+msgstr "Имена игроков не должны повторяться"
+
+msgid "Only aces remain in the game. The game is over."
+msgstr "В игре остались только тузы. Игра окончена."
+
+#, python-brace-format
+msgid "Only one player remains with cards: player #{} {}."
+msgstr "С картами остался только один игрок: игрок №{} {}."
+
+#, python-brace-format
+msgid "Player #{} {} automatically discarded four cards of rank {}."
+msgstr "Игрок №{} {} автоматически сбросил четыре карты номинала {}."
+
+#, python-brace-format
+msgid "It is now player #{} {}'s turn."
+msgstr "Сейчас ходит игрок №{} {}."
+
+#, python-brace-format
+msgid ""
+"It is your turn.\n"
+"\n"
+"Your cards:\n"
+"{}"
+msgstr ""
+"Ваш ход.\n"
+"\n"
+"Ваши карты:\n"
+"{}"
+
+msgid "The previous player placed the last cards. You must use not."
+msgstr "Предыдущий игрок выложил последние карты. Вы должны использовать команду not."
+
+msgid ""
+"You start a new round.\n"
+"Choose a rank with play.\n"
+"Available ranks: 6 7 8 9 10 J D K."
+msgstr ""
+"Вы начинаете новый кон.\n"
+"Выберите номинал с помощью команды play.\n"
+"Доступные номиналы: 6 7 8 9 10 J D K."
+
+#, python-brace-format
+msgid ""
+"Declared rank: {}.\n"
+"Choose believe or not."
+msgstr ""
+"Объявленный номинал: {}.\n"
+"Выберите believe или not."
+
+#, python-brace-format
+msgid "Player #{} {} has no cards and finished the game. Place: {}."
+msgstr "У игрока №{} {} не осталось карт, и он завершил игру. Место: {}."
+
+msgid "Game has not started."
+msgstr "Игра ещё не началась."
+
+msgid "It is not your turn."
+msgstr "Сейчас не ваш ход."
+
+msgid "The pile is not empty. Use believe or not."
+msgstr "Стопка не пуста. Используйте believe или not."
+
+msgid "Invalid command format."
+msgstr "Неверный формат команды."
+
+msgid "Specify a rank and card numbers."
+msgstr "Укажите номинал и номера карт."
+
+msgid "Aces cannot be declared."
+msgstr "Тузы нельзя объявлять."
+
+msgid "Invalid declared rank."
+msgstr "Недопустимый объявленный номинал."
+
+msgid "Card numbers must be integers."
+msgstr "Номера карт должны быть целыми числами."
+
+#, python-brace-format
+msgid "Player #{} {} placed {} card of rank {}."
+msgid_plural "Player #{} {} placed {} cards of rank {}."
+msgstr[0] "Игрок №{} {} положил {} карту номинала {}."
+msgstr[1] "Игрок №{} {} положил {} карты номинала {}."
+msgstr[2] "Игрок №{} {} положил {} карт номинала {}."
+
+msgid "The pile is empty. Use play."
+msgstr "Стопка пуста. Используйте play."
+
+msgid "There is no declared rank."
+msgstr "Объявленный номинал отсутствует."
+
+#, python-brace-format
+msgid "Player #{} {} believed and placed {} more card of rank {}."
+msgid_plural "Player #{} {} believed and placed {} more cards of rank {}."
+msgstr[0] "Игрок №{} {} поверил и положил ещё {} карту номинала {}."
+msgstr[1] "Игрок №{} {} поверил и положил ещё {} карты номинала {}."
+msgstr[2] "Игрок №{} {} поверил и положил ещё {} карт номинала {}."
+
+msgid "There is no previous move."
+msgstr "Предыдущего хода нет."
+
+msgid "Choose exactly one card."
+msgstr "Выберите ровно одну карту."
+
+msgid "Card number must be an integer."
+msgstr "Номер карты должен быть целым числом."
+
+msgid "Card number is out of range."
+msgstr "Номер карты вне допустимого диапазона."
+
+#, python-brace-format
+msgid "Checked card #{}: {}."
+msgstr "Проверена карта №{}: {}."
+
+#, python-brace-format
+msgid "The checked card matches rank {}."
+msgstr "Проверенная карта соответствует номиналу {}."
+
+#, python-brace-format
+msgid "Player #{} {} finished the game. Place: {}."
+msgstr "Игрок №{} {} завершил игру. Место: {}."
+
+#, python-brace-format
+msgid "The checked card does not match rank {}."
+msgstr "Проверенная карта не соответствует номиналу {}."
+
+#, python-brace-format
+msgid "Player #{} {} takes {} card."
+msgid_plural "Player #{} {} takes {} cards."
+msgstr[0] "Игрок №{} {} забирает {} карту."
+msgstr[1] "Игрок №{} {} забирает {} карты."
+msgstr[2] "Игрок №{} {} забирает {} карт."
+
+msgid ""
+"GAME RULES\n"
+"\n"
+"1. The game has from 2 to 4 players.\n"
+"2. Players have 10 seconds to accept an invitation.\n"
+"3. A deck of 36 cards is used.\n"
+"4. The first player chooses a rank from 6 to K.\n"
+"5. Aces cannot be declared.\n"
+"6. The believe command adds cards to the pile.\n"
+"7. The not command checks one card from the last move.\n"
+"8. The loser of the check takes the whole pile.\n"
+"9. The player who takes the pile skips a turn.\n"
+"10. Four cards of one rank are discarded automatically.\n"
+"11. Four aces are not discarded automatically.\n"
+"12. A player's last cards must be checked.\n"
+"13. A player without cards finishes the game.\n"
+"14. The game ends when only aces remain."
+msgstr ""
+"ПРАВИЛА ИГРЫ\n"
+"\n"
+"1. В игре участвуют от 2 до 4 игроков.\n"
+"2. У игроков есть 10 секунд, чтобы принять приглашение.\n"
+"3. Используется колода из 36 карт.\n"
+"4. Первый игрок выбирает номинал от 6 до K.\n"
+"5. Тузы нельзя объявлять.\n"
+"6. Команда believe добавляет карты в стопку.\n"
+"7. Команда not проверяет одну карту из последнего хода.\n"
+"8. Проигравший проверку забирает всю стопку.\n"
+"9. Игрок, который забрал стопку, пропускает ход.\n"
+"10. Четыре карты одного номинала сбрасываются автоматически.\n"
+"11. Четыре туза автоматически не сбрасываются.\n"
+"12. Последние карты игрока должны быть проверены.\n"
+"13. Игрок без карт завершает игру.\n"
+"14. Игра заканчивается, когда остаются только тузы."
+
+msgid "The rules command takes no arguments."
+msgstr "Команда rules не принимает аргументов."
+
+msgid "Invalid command."
+msgstr "Недопустимая команда."
+
